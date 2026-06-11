@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user)
 
       if (typeof window !== "undefined") {
-        window.location.href = data.user.role === "agency" ? "/agency/dashboard" : "/choose-mode"
+        window.location.href = data.user.role === "agency" ? "/agency/dashboard" : "/single"
       }
     } finally {
       setIsLoading(false)

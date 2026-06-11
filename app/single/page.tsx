@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plane, User, Heart, Users, Users2 } from 'lucide-react';
 import { AnimatedBackgroundElements } from '@/components/animated-background-elements';
 import { useRouter } from 'next/navigation';
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DateRangePicker } from '@/components/date-range-picker';
 import { Loader2 } from 'lucide-react';
 import { ImageSelector } from '@/components/multiplayer/image-selector';
+import { SessionLobby } from '@/components/multiplayer/session-lobby';
 import { SingleModeProvider, useSingleMode } from '@/contexts/single-mode-context';
 import { saveTravelSession } from '@/lib/travel-firestore';
 
@@ -347,6 +348,30 @@ function SingleModePageContent() {
                     })}
                   </div>
                 </motion.div>
+
+                {/* Traveling Together? */}
+                <AnimatePresence>
+                  {(preferences.travelCompanion === "couple" ||
+                    preferences.travelCompanion === "friends" ||
+                    preferences.travelCompanion === "family") && (
+                    <motion.div
+                      key="traveling-together"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-4 border-t border-border">
+                        <h3 className="text-sm font-semibold mb-1">Traveling Together?</h3>
+                        <p className="text-xs text-muted-foreground mb-4">
+                          Create a shared room for real-time collaborative planning, or join one your group already started.
+                        </p>
+                        <SessionLobby />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Analyze Button */}
                 <motion.div

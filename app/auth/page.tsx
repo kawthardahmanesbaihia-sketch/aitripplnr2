@@ -34,7 +34,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (user) {
-      router.push(user.role === "agency" ? "/agency/dashboard" : "/choose-mode")
+      router.push(user.role === "agency" ? "/agency/dashboard" : "/single")
     }
   }, [user, router])
 
@@ -69,7 +69,7 @@ export default function AuthPage() {
         password: signupPassword,
         role:     signupRole,
       })
-      router.push(signupRole === "agency" ? "/agency/dashboard" : "/choose-mode")
+      router.push(signupRole === "agency" ? "/agency/dashboard" : "/single")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed")
     } finally {
