@@ -1,22 +1,59 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Plane, Menu, X, User, LogOut, Heart, Clock, Building2, LayoutDashboard, CalendarCheck, ClipboardList } from "lucide-react"
+import {
+  Plane, Menu, X, User, LogOut, Heart, Clock,
+  Building2, LayoutDashboard, CalendarCheck, ClipboardList, Bell,
+} from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Notif {
+  id:                 number
+  type:               "booking_request" | "booking_status"
+  message:            string
+  package_id:         string | null
+  booking_request_id: number | null
+  is_read:            boolean
+  created_at:         string
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1)  return "Just now"
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24)  return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7)  return `${days}d ago`
+  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+}
+
+// ── Component ──────────────────────────────────────────────────────────────────
+
 export function Navbar() {
-  const [isScrolled,      setIsScrolled]      = useState(false)
+  const [isScrolled,       setIsScrolled]       = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isDropdownOpen,  setIsDropdownOpen]  = useState(false)
+  const [isDropdownOpen,   setIsDropdownOpen]   = useState(false)
+  const [isNotifOpen,      setIsNotifOpen]      = useState(false)
+  const [unreadCount,      setUnreadCount]      = useState(0)
+  const [notifications,    setNotifications]    = useState<Notif[]>([])
+  const [notifLoaded,      setNotifLoaded]      = useState(false)
+
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const notifRef    = useRef<HTMLDivElement>(null)
 
   const pathname = usePathname()
   const router   = useRouter()
@@ -24,27 +61,77 @@ export function Navbar() {
   const { user, logout } = useAuth()
 
   const navItems = [
-    { name: t("home"),  href: "/" },
-    { name: "Explore",  href: "/explore" },
-    { name: t("about"), href: "/about" },
-    { name: t("contact"), href: "/contact" },
+    { name: t("home"),      href: "/"        },
+    { name: "Explore",      href: "/explore" },
+    { name: t("about"),     href: "/about"   },
+    { name: t("contact"),   href: "/contact" },
   ]
 
+  // ── Scroll ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // ── Click outside (both dropdowns) ──────────────────────────────────────────
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsDropdownOpen(false)
       }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false)
+      }
     }
     document.addEventListener("mousedown", handleClick)
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
+
+  // ── Fetch unread count on login / logout ─────────────────────────────────────
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0)
+      setNotifications([])
+      setNotifLoaded(false)
+      return
+    }
+    fetch("/api/notifications/unread-count", { credentials: "include" })
+      .then(r => r.ok ? r.json() : { count: 0 })
+      .then(d => setUnreadCount(d.count ?? 0))
+      .catch(() => {})
+  }, [user])
+
+  // ── Lazy-load full notification list ─────────────────────────────────────────
+  const loadNotifications = useCallback(() => {
+    if (notifLoaded) return
+    setNotifLoaded(true)
+    fetch("/api/notifications", { credentials: "include" })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Notif[]) => setNotifications(data))
+      .catch(() => {})
+  }, [notifLoaded])
+
+  const handleBellClick = () => {
+    const opening = !isNotifOpen
+    setIsNotifOpen(opening)
+    setIsDropdownOpen(false)
+    if (opening) loadNotifications()
+  }
+
+  const handleNotifClick = useCallback(async (notif: Notif) => {
+    setIsNotifOpen(false)
+    if (!notif.is_read) {
+      // optimistic update
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+      await fetch(`/api/notifications/${notif.id}/read`, {
+        method: "PATCH",
+        credentials: "include",
+      }).catch(() => {})
+    }
+    router.push(notif.type === "booking_request" ? "/agency/bookings" : "/bookings")
+  }, [router])
 
   const handleLogout = async () => {
     setIsDropdownOpen(false)
@@ -52,6 +139,7 @@ export function Navbar() {
     router.push("/")
   }
 
+  // ── Menus ────────────────────────────────────────────────────────────────────
   const travelerMenu = [
     { label: "My Profile",      href: "/profile",               icon: User          },
     { label: "My Bookings",     href: "/bookings",              icon: CalendarCheck },
@@ -84,7 +172,8 @@ export function Navbar() {
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
+
+        {/* ── Logo ─────────────────────────────────────────────────────────── */}
         <Link href="/" className="flex items-center gap-2 transition-all duration-300 hover:scale-105">
           <motion.div
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
@@ -96,7 +185,7 @@ export function Navbar() {
           <span className="hidden font-bold text-lg sm:inline-block">{t("Ai Trip Planner")}</span>
         </Link>
 
-        {/* Desktop Nav */}
+        {/* ── Desktop Nav ───────────────────────────────────────────────────── */}
         <div className="hidden items-center gap-1 md:flex">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
@@ -124,15 +213,92 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* Right side */}
+        {/* ── Right side ───────────────────────────────────────────────────── */}
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
 
+          {/* ── Notification Bell ─────────────────────────────────────────── */}
+          {user && (
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={handleBellClick}
+                className="relative h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="h-[18px] w-[18px]" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center bg-destructive text-[9px] font-bold text-white rounded-full leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {isNotifOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                    animate={{ opacity: 1, scale: 1,    y: 0  }}
+                    exit={{   opacity: 0, scale: 0.95, y: -8 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-80 rounded-xl border border-border bg-background shadow-lg shadow-primary/10 overflow-hidden z-50"
+                  >
+                    {/* Header */}
+                    <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                      <p className="text-sm font-semibold">Notifications</p>
+                      {unreadCount > 0 && (
+                        <span className="text-[10px] font-semibold bg-destructive/15 text-destructive px-2 py-0.5 rounded-full">
+                          {unreadCount} unread
+                        </span>
+                      )}
+                    </div>
+
+                    {/* List */}
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+                          <Bell className="h-6 w-6 mb-2 text-muted-foreground/30" />
+                          <p className="text-sm text-muted-foreground">No notifications yet</p>
+                        </div>
+                      ) : (
+                        notifications.map(notif => (
+                          <button
+                            key={notif.id}
+                            onClick={() => handleNotifClick(notif)}
+                            className={cn(
+                              "w-full text-left px-4 py-3 border-b border-border/50 last:border-0 hover:bg-accent transition-colors",
+                              !notif.is_read && "bg-primary/5"
+                            )}
+                          >
+                            <div className="flex items-start gap-2.5">
+                              <span
+                                className={cn(
+                                  "mt-[7px] h-1.5 w-1.5 rounded-full shrink-0",
+                                  !notif.is_read ? "bg-primary" : "bg-transparent"
+                                )}
+                              />
+                              <div className="min-w-0">
+                                <p className="text-sm leading-snug text-left">{notif.message}</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                  {timeAgo(notif.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* ── User avatar / Get Started ────────────────────────────────── */}
           {user ? (
             <div className="relative" ref={dropdownRef}>
               <button
-                onClick={() => setIsDropdownOpen((v) => !v)}
+                onClick={() => { setIsDropdownOpen(v => !v); setIsNotifOpen(false) }}
                 className="h-9 w-9 rounded-full overflow-hidden bg-primary/10 border-2 border-primary/20 hover:border-primary/60 transition-colors flex items-center justify-center"
               >
                 {avatarContent}
@@ -201,7 +367,7 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* ── Mobile menu ───────────────────────────────────────────────────── */}
       {isMobileMenuOpen && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
