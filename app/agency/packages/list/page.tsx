@@ -12,7 +12,7 @@ import type { Package } from "@/types/package"
 import Link from "next/link"
 import {
   Package as PackageIcon,
-  Plus, Search, Edit, Trash2,
+  Plus, Search, Edit, Trash2, Eye,
   CheckCircle2, FileText, Star,
   MapPin, Clock, DollarSign,
   ArrowLeft, Loader2,
@@ -297,6 +297,15 @@ export default function PackagesListPage() {
 
                       {/* Hover action icons */}
                       <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link href={`/agency/packages/view/${pkg.id}`}>
+                          <button
+                            type="button"
+                            title="View"
+                            className="h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white shadow transition-colors"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-foreground" />
+                          </button>
+                        </Link>
                         <Link href={`/agency/packages/edit/${pkg.id}`}>
                           <button
                             type="button"
@@ -364,6 +373,16 @@ export default function PackagesListPage() {
 
                       {/* Action row */}
                       <div className="flex gap-2 mt-auto pt-1 border-t">
+                        <Link href={`/agency/packages/view/${pkg.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-8"
+                          >
+                            <Eye className="h-3 w-3 mr-1.5" />
+                            View
+                          </Button>
+                        </Link>
                         <Link href={`/agency/packages/edit/${pkg.id}`} className="flex-1">
                           <Button
                             variant="ghost"
