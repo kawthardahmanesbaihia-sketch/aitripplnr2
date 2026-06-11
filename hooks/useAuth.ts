@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { User, UserRole } from "@/types/user";
+// Legacy types used by agency pages only — kept separate from the new auth system
+type UserRole = "traveler" | "agency"
+interface User {
+  id:        string
+  email:     string
+  role:      UserRole
+  name:      string
+  createdAt: string
+}
 
 const STORAGE_KEY = "currentUser";
 

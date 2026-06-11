@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { autoTag, enhanceTagsWithAuto, validateTags } from "@/lib/autoTagging";
 import { 
   ArrowLeft, 
@@ -59,7 +59,7 @@ export default function AgencyMediaPage() {
       const stored = localStorage.getItem("agencyMedia");
       if (stored) {
         const parsed = JSON.parse(stored);
-        setMediaItems(parsed.filter((item: MediaItem) => item.agencyId === user?.id));
+        setMediaItems(parsed.filter((item: MediaItem) => item.agencyId === user?.uid));
       }
     } catch (error) {
       console.error("Error loading media items:", error);
@@ -143,7 +143,7 @@ export default function AgencyMediaPage() {
         tags: enhancedTags,
         autoTags: autoTags,
         confidence,
-        agencyId: user.id,
+        agencyId: user.uid,
         createdAt: new Date().toISOString()
       };
 

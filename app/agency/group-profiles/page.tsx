@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { leastMisery, normalizePreferences } from "@/lib/leastMisery";
 import type { GroupPreferences } from "@/lib/leastMisery";
 import type { UserTaste } from "@/hooks/useTaste";

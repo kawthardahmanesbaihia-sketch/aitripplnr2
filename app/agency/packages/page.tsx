@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { usePackages } from "@/hooks/usePackages";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Image as ImageIcon } from "lucide-react";
@@ -90,12 +90,12 @@ export default function CreatePackagePage() {
         image: formData.image || `https://source.unsplash.com/800x600/?${formData.destination},travel`,
         description: formData.description,
         tags: formData.tags,
-        agencyName: user.name || user.email.split("@")[0],
+        agencyName: user.full_name || user.username || user.email.split("@")[0],
         contactEmail: formData.contactEmail || undefined,
         contactPhone: formData.contactPhone || undefined
       };
 
-      await addPackage(packageData, user.id);
+      await addPackage(packageData, user.uid);
       router.push("/agency/packages/list");
     } catch (error) {
       console.error("Error creating package:", error);

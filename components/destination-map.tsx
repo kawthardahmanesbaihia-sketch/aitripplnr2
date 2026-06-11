@@ -118,40 +118,40 @@ export function DestinationMap({ markers, countryName }: DestinationMapProps) {
 
       // Add markers
       markers.forEach((marker) => {
+        const emoji = marker.type === 'hotel' ? '🏨' : marker.type === 'restaurant' ? '🍽️' : '📸'
+        const bgColor = marker.type === 'hotel' ? '#3b82f6' : marker.type === 'restaurant' ? '#ef4444' : '#22c55e'
+
         const icon = window.L.divIcon({
           html: `
             <div style="
-              background: ${marker.type === 'hotel' ? '#3b82f6' : marker.type === 'restaurant' ? '#ef4444' : '#22c55e'};
+              background: ${bgColor};
               color: white;
               border-radius: 50%;
-              width: 32px;
-              height: 32px;
+              width: 36px;
+              height: 36px;
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 16px;
-              font-weight: bold;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            ">
-              ${marker.type === 'hotel' ? '<Hotel style="font-size: 18px;">🏨</Hotel>' : 
-               marker.type === 'restaurant' ? '<Utensils style="font-size: 18px;">🍽</Utensils>' : 
-               '<Camera style="font-size: 18px;">📸</Camera>'}
-            </div>
+              font-size: 18px;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+              border: 2px solid white;
+            ">${emoji}</div>
           `,
           className: 'custom-marker',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         })
 
+        const ratingHtml  = marker.info.rating  ? `<p style="margin:4px 0">⭐ ${marker.info.rating}/5</p>` : ""
+        const priceHtml   = marker.info.price   ? `<p style="margin:4px 0">💰 ${marker.info.price}</p>` : ""
+        const cuisineHtml = marker.info.cuisine ? `<p style="margin:4px 0">🍴 ${marker.info.cuisine}</p>` : ""
+        const typeLabel   = marker.type === 'hotel' ? 'Hotel' : marker.type === 'restaurant' ? 'Restaurant' : 'Attraction'
+
         const popupContent = `
-          <div style="min-width: 200px; padding: 10px;">
-            <h3 style="margin: 0 0 5px 0; font-weight: bold;">${marker.name}</h3>
-            ${marker.info.rating && `<p style="margin: 5px 0;">⭐ ${marker.info.rating}/5</p>`}
-            ${marker.info.price && `<p style="margin: 5px 0;">💰 ${marker.info.price}</p>`}
-            ${marker.info.cuisine && `<p style="margin: 5px 0;">🍽 ${marker.info.cuisine}</p>`}
-            <p style="margin: 5px 0; font-size: 12px; color: #666;">
-              Click to see more details
-            </p>
+          <div style="min-width:200px;padding:10px;font-family:system-ui,sans-serif">
+            <p style="margin:0 0 2px 0;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em">${typeLabel}</p>
+            <h3 style="margin:0 0 6px 0;font-weight:700;font-size:14px">${marker.name}</h3>
+            ${ratingHtml}${priceHtml}${cuisineHtml}
           </div>
         `
 

@@ -1,11 +1,10 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Clock, Star, Compass, Mountain, Camera, Utensils, Waves, Trees } from "lucide-react"
+import { Clock, Star, Compass, Mountain, Camera, Utensils, Waves, Trees, DollarSign } from "lucide-react"
 
 const ICONS = [Compass, Mountain, Camera, Utensils, Waves, Trees]
 
-/* Each theme has light and dark variants so pastel colors don't disappear on dark bg */
 const THEMES = [
   {
     lightBg: "from-orange-100 to-amber-100",
@@ -46,11 +45,13 @@ const THEMES = [
 ]
 
 interface Activity {
-  name: string
-  duration: string
+  name:        string
+  duration:    string
   description: string
-  rating?: number
-  image?: string
+  rating?:     number
+  image?:      string
+  price?:      string
+  category?:   string
 }
 
 export function ActivitiesGrid({ activities }: { activities: Activity[] }) {
@@ -66,7 +67,7 @@ export function ActivitiesGrid({ activities }: { activities: Activity[] }) {
           <p className="text-sm text-muted-foreground col-span-3 py-8">No activity data available.</p>
         )}
         {activities.map((activity, i) => {
-          const Icon = ICONS[i % ICONS.length]
+          const Icon  = ICONS[i % ICONS.length]
           const theme = THEMES[i % THEMES.length]
           return (
             <motion.div
@@ -75,7 +76,6 @@ export function ActivitiesGrid({ activities }: { activities: Activity[] }) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.07 }}
               whileHover={{ y: -4 }}
-              /* bg-card + border-border auto-switch */
               className="bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
             >
               {/* Visual header */}
@@ -92,11 +92,15 @@ export function ActivitiesGrid({ activities }: { activities: Activity[] }) {
                     <Icon className={`w-12 h-12 ${theme.icon}`} />
                   </div>
                 )}
+
                 {/* Duration badge */}
-                <div className={`absolute bottom-3 left-3 ${theme.badge} text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5`}>
-                  <Clock className="w-3 h-3" />
-                  {activity.duration}
-                </div>
+                {activity.duration && (
+                  <div className={`absolute bottom-3 left-3 ${theme.badge} text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5`}>
+                    <Clock className="w-3 h-3" />
+                    {activity.duration}
+                  </div>
+                )}
+
                 {/* Rating */}
                 {activity.rating && (
                   <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
@@ -104,10 +108,25 @@ export function ActivitiesGrid({ activities }: { activities: Activity[] }) {
                     <span className="text-xs font-bold text-foreground">{activity.rating}</span>
                   </div>
                 )}
+
+                {/* Price badge */}
+                {activity.price && (
+                  <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                    <DollarSign className="w-3 h-3 text-green-600" />
+                    <span className="text-xs font-semibold text-foreground">{activity.price}</span>
+                  </div>
+                )}
               </div>
 
               <div className="p-4">
-                <h3 className="font-bold text-card-foreground text-sm mb-1.5">{activity.name}</h3>
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <h3 className="font-bold text-card-foreground text-sm">{activity.name}</h3>
+                  {activity.category && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium shrink-0">
+                      {activity.category}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">
                   {activity.description}
                 </p>

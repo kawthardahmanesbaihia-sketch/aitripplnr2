@@ -20,5 +20,24 @@ function createPool(): mysql.Pool {
   });
 }
 
-export const db: mysql.Pool =
-  globalThis._mysqlPool ?? (globalThis._mysqlPool = createPool());
+// Lazy getter — pool is only created when first accessed, so module load
+// never causes ECONNREFUSED at startup when MySQL isn't running.
+export function getDb(): mysql.Pool {
+  if (!globalThis._mysqlPool) {
+    try {
+      globalThis._mysqlPool = createPool()
+    } catch (err) {
+      console.error("[db] Failed to create MySQL pool:", err)
+      throw err
+    }
+  }
+  return globalThis._mysqlPool
+}
+
+// Legacy named export kept for backward compatibility with existing callers.
+// This is a getter so the pool is still created lazily on first use.
+export const db: mysql.Pool = new Proxy({} as mysql.Pool, {
+  get(_target, prop) {
+    return (getDb() as any)[prop]
+  },
+})

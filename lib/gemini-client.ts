@@ -195,6 +195,36 @@ export async function analyzeImages(
   }
 }
 
+function buildStaticSummary(
+  destinationName: string,
+  userPreferences: string[],
+  climate: string,
+  activities: string[]
+): AIDestinationSummary {
+  const prefStr = userPreferences.slice(0, 3).join(", ") || "travel"
+  const actStr  = activities.slice(0, 3).join(", ") || "exploration"
+  const climateDesc = climate || "varied"
+  return {
+    whyMatch: `${destinationName} is a compelling destination for travelers drawn to ${prefStr}. It offers a rich blend of culture, scenery, and authentic experiences that align with your travel style.`,
+    pros: [
+      `Well-suited for travelers interested in ${prefStr}`,
+      `Rich local culture with unique, memorable experiences`,
+      `${actStr ? `Activities like ${actStr} are well-established` : "Wide range of activities available"}`,
+      `Distinct destination character that rewards exploration`,
+    ],
+    cons: [
+      "Peak seasons can bring crowds — plan visits at shoulder times for a quieter experience",
+      "Local prices and availability vary by season; advance booking is recommended",
+    ],
+    bestFor: `Travelers seeking authentic experiences with a passion for ${prefStr}.`,
+    recommendations: [
+      "Research local customs and etiquette before your trip",
+      `Pack for the ${climateDesc} climate and plan activities accordingly`,
+      "Book popular attractions and accommodations well in advance",
+    ],
+  }
+}
+
 export async function generateDestinationSummary(
   destinationName: string,
   userPreferences: string[],
@@ -205,8 +235,8 @@ export async function generateDestinationSummary(
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      console.warn("[Gemini] API key not configured");
-      return null;
+      console.warn("[Gemini] API key not configured — using static summary");
+      return buildStaticSummary(destinationName, userPreferences, climate, activities);
     }
 
     // Check cache first
@@ -219,7 +249,7 @@ export async function generateDestinationSummary(
 
     console.log("[Gemini] Generating summary for:", destinationName);
 
-    const prompt = `Create a detailed travel recommendation for ${destinationName}. 
+    const prompt = `Create a detailed travel recommendation for ${destinationName}.
 User preferences: ${userPreferences.join(", ")}.
 Climate: ${climate}.
 Available activities: ${activities.join(", ")}.
@@ -236,10 +266,10 @@ Return ONLY a JSON object with this exact structure (no other text):
 }`;
 
     const content = await callGeminiAPI(prompt, apiKey);
-    
+
     if (!content) {
-      console.error("[Gemini] Failed to get response");
-      return null;
+      console.warn("[Gemini] No content returned — using static summary");
+      return buildStaticSummary(destinationName, userPreferences, climate, activities);
     }
 
     try {
@@ -253,14 +283,15 @@ Return ONLY a JSON object with this exact structure (no other text):
         return result;
       }
     } catch (parseError) {
-      console.error("[Gemini] Error parsing response:", parseError);
-      return null;
+      console.warn("[Gemini] JSON parse failed — using static summary:", parseError);
+      return buildStaticSummary(destinationName, userPreferences, climate, activities);
     }
 
-    return null;
+    console.warn("[Gemini] No JSON match in response — using static summary");
+    return buildStaticSummary(destinationName, userPreferences, climate, activities);
   } catch (error) {
-    console.error("[Gemini] Error:", error);
-    return null;
+    console.warn("[Gemini] Error — using static summary:", error);
+    return buildStaticSummary(destinationName, userPreferences, climate, activities);
   }
 }
 

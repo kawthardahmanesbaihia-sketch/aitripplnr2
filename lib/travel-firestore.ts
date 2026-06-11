@@ -14,7 +14,16 @@
  */
 
 import { doc, setDoc, getDoc } from "firebase/firestore"
+import { getAuth } from "firebase/auth"
 import { firestore, isFirebaseInitialized } from "./firebase-config"
+
+function isUserAuthenticated(): boolean {
+  try {
+    return !!getAuth().currentUser
+  } catch {
+    return false
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +81,11 @@ export async function saveTravelSession(
 ): Promise<string | null> {
   if (!isFirebaseInitialized || !firestore) {
     console.warn("[travel-firestore] Firestore not initialized — session not saved")
+    return null
+  }
+
+  if (!isUserAuthenticated()) {
+    console.warn("[travel-firestore] User not authenticated — session not saved")
     return null
   }
 
@@ -137,6 +151,11 @@ export async function saveItinerary(
 ): Promise<string | null> {
   if (!isFirebaseInitialized || !firestore) {
     console.warn("[travel-firestore] Firestore not initialized — itinerary not saved")
+    return null
+  }
+
+  if (!isUserAuthenticated()) {
+    console.warn("[travel-firestore] User not authenticated — itinerary not saved")
     return null
   }
 

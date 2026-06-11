@@ -6,27 +6,37 @@ import { getCountryFlagUrl } from "@/lib/destination-image-generator"
 import { useEffect, useState } from "react"
 
 interface DestinationHeroProps {
-  name: string
+  name: string            // country name
+  city?: string           // city name (shown as primary headline)
   matchPercentage: number
   image: string
-  tagline?: string
   squadLabel?: string
   squadEmoji?: string
   weatherBadge?: string
 }
 
-export function DestinationHero({ name, matchPercentage, image, tagline, squadLabel, squadEmoji, weatherBadge }: DestinationHeroProps) {
+export function DestinationHero({
+  name,
+  city,
+  matchPercentage,
+  image,
+  squadLabel,
+  squadEmoji,
+  weatherBadge,
+}: DestinationHeroProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
   const circumference = 2 * Math.PI * 34
+  const displayCity = city || name
+  const showCountryLine = !!city && city.toLowerCase() !== name.toLowerCase()
 
   return (
     <div className="relative h-72 md:h-96 overflow-hidden bg-foreground/90">
       {/* Background image */}
       <img
         src={image}
-        alt={name}
+        alt={displayCity}
         className="w-full h-full object-cover opacity-90"
         onError={(e) => {
           e.currentTarget.src =
@@ -35,8 +45,8 @@ export function DestinationHero({ name, matchPercentage, image, tagline, squadLa
       />
 
       {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-transparent" />
 
       {/* Bottom content */}
       <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 flex flex-col gap-3">
@@ -44,19 +54,28 @@ export function DestinationHero({ name, matchPercentage, image, tagline, squadLa
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="flex items-center gap-3"
+          className="flex items-end gap-3"
         >
           <img
             src={getCountryFlagUrl(name)}
             alt={`${name} flag`}
-            className="h-7 w-11 rounded object-cover border border-white/30 shadow-md"
+            className="h-7 w-11 rounded object-cover border border-white/30 shadow-md mb-0.5"
             onError={(e) => {
               ;(e.currentTarget as HTMLImageElement).style.display = "none"
             }}
           />
-          <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-md">
-            {name}
-          </h1>
+          <div>
+            {/* City — primary headline */}
+            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-md leading-none">
+              {displayCity}
+            </h1>
+            {/* Country — shown below city when they differ */}
+            {showCountryLine && (
+              <p className="text-white/65 text-sm md:text-base font-medium mt-1 tracking-wide">
+                {name}
+              </p>
+            )}
+          </div>
         </motion.div>
 
         <motion.div
@@ -71,11 +90,18 @@ export function DestinationHero({ name, matchPercentage, image, tagline, squadLa
             <span className="text-white font-semibold text-sm">{matchPercentage}% Match</span>
           </div>
 
+          {/* Squad badge */}
+          {squadLabel && squadEmoji && (
+            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-white/20">
+              <span className="text-sm">{squadEmoji}</span>
+              <span className="text-white text-sm font-medium">{squadLabel}</span>
+            </div>
+          )}
 
           {/* Weather */}
-          <div className="flex items-center gap-1.5 bg-blue-500/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
+          <div className="flex items-center gap-1.5 bg-sky-500/75 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
             <CloudSun className="w-3.5 h-3.5 text-white" />
-            <span className="text-white text-sm font-medium">{weatherBadge ?? "15–25°C · Comfortable"}</span>
+            <span className="text-white text-sm font-medium">{weatherBadge ?? "Comfortable climate"}</span>
           </div>
         </motion.div>
       </div>

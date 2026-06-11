@@ -3,19 +3,21 @@
 import { motion, AnimatePresence } from "framer-motion"
 import {
   LayoutDashboard, Hotel, Utensils, Activity, Calendar,
-  Map, ClipboardList, Globe, ChevronLeft, Menu,
+  Map, ClipboardList, Globe, ChevronLeft, Menu, Bus, BrainCircuit,
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 export const NAV_ITEMS = [
-  { id: "overview",     label: "Overview",   icon: LayoutDashboard },
-  { id: "hotels",       label: "Hotels",     icon: Hotel },
-  { id: "restaurants",  label: "Food",       icon: Utensils },
-  { id: "activities",   label: "Activities", icon: Activity },
-  { id: "events",       label: "Events",     icon: Calendar },
-  { id: "map",          label: "Map",        icon: Map },
-  { id: "plan",         label: "Itinerary",  icon: ClipboardList },
+  { id: "overview",     label: "Overview",    icon: LayoutDashboard },
+  { id: "hotels",       label: "Hotels",      icon: Hotel },
+  { id: "restaurants",  label: "Food",        icon: Utensils },
+  { id: "activities",   label: "Activities",  icon: Activity },
+  { id: "events",       label: "Events",      icon: Calendar },
+  { id: "map",          label: "Map",         icon: Map },
+  { id: "transport",    label: "Transport",   icon: Bus },
+  { id: "ai-insights",  label: "AI Insights", icon: BrainCircuit },
+  { id: "plan",         label: "Itinerary",   icon: ClipboardList },
 ]
 
 interface SidebarProps {

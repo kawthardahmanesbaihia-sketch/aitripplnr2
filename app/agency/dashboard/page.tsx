@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { getAnalyticsData, type AnalyticsData } from "@/lib/analytics";
 import { 
   Users, 
@@ -84,7 +84,7 @@ export default function AgencyDashboard() {
             <div>
               <h1 className="text-3xl font-bold">Agency Dashboard</h1>
               <p className="text-muted-foreground">
-                Welcome back, {user?.name || user?.email}
+                Welcome back, {user?.full_name || user?.username || user?.email}
               </p>
             </div>
             <Link href="/agency/packages">

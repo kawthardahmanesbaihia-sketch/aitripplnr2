@@ -14,6 +14,8 @@ import { EventsPanel } from "./EventsPanel"
 import { MapSection } from "./MapSection"
 import { ItinerarySection } from "./ItinerarySection"
 import { AIInsightBox } from "./AIInsightBox"
+import { TransportSection } from "./TransportSection"
+import { AITransformSection } from "./AITransformSection"
 
 interface DestinationData {
   name: string
@@ -32,21 +34,33 @@ interface DestinationData {
     image?: string
   }>
   restaurants: Array<{
-    name: string
-    rating: number
-    cuisine: string
-    description: string
-    price: string
-    priceLevel: "budget" | "mid-range" | "luxury"
-    address: string
-    image?: string
+    name:             string
+    rating:           number
+    userRatingsTotal?: number
+    cuisine:          string
+    description:      string
+    price:            string
+    priceLevel:       "budget" | "mid-range" | "luxury"
+    address:          string
+    image?:           string
+    openNow?:         boolean
+    mapsUrl?:         string
   }>
   activities: Array<{
-    name: string
-    duration: string
+    name:        string
+    duration:    string
     description: string
-    rating?: number
-    image?: string
+    rating?:     number
+    image?:      string
+    price?:      string
+    category?:   string
+  }>
+  transfers?: Array<{
+    name:     string
+    vehicle:  string
+    capacity: number
+    price:    string
+    duration: string
   }>
   mapMarkers?: Array<{
     id: string
@@ -58,38 +72,40 @@ interface DestinationData {
 }
 
 interface SquadEvent {
-  title: string
-  category: string
-  date: string
-  matchPct: number
+  title:       string
+  category:    string
+  date:        string
+  matchPct:    number
   description?: string
 }
 
 interface SquadItineraryDay {
-  day: number
-  theme: string
-  morning: string
+  day:       number
+  theme:     string
+  morning:   string
   afternoon: string
-  evening: string
-  icon: string
+  evening:   string
+  icon:      string
 }
 
 interface DestinationDashboardProps {
-  destination: DestinationData
-  summary?: string
-  squadTagline?: string
-  squadLabel?: string
-  squadEmoji?: string
-  squadEvents?: SquadEvent[]
+  destination:     DestinationData
+  city?:           string
+  summary?:        string
+  squadTagline?:   string
+  squadLabel?:     string
+  squadEmoji?:     string
+  squadEvents?:    SquadEvent[]
   squadItinerary?: SquadItineraryDay[]
-  weatherBadge?: string
-  backHref?: string
-  backLabel?: string
+  weatherBadge?:   string
+  backHref?:       string
+  backLabel?:      string
   weatherContent?: ReactNode
-  eventsContent?: ReactNode
-  mapContent?: ReactNode
+  eventsContent?:  ReactNode
+  mapContent?:     ReactNode
   itineraryContent?: ReactNode
   holidayWarning?: ReactNode
+  aiContext?:      { vibes: string[]; travelStyle: string; confidenceBreakdown?: Record<string, number> }
 }
 
 const SECTION_VARIANTS = {
@@ -100,8 +116,8 @@ const SECTION_VARIANTS = {
 
 export function DestinationDashboard({
   destination,
+  city,
   summary,
-  squadTagline,
   squadLabel,
   squadEmoji,
   squadEvents,
@@ -114,8 +130,11 @@ export function DestinationDashboard({
   mapContent,
   itineraryContent,
   holidayWarning,
+  aiContext,
 }: DestinationDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview")
+
+  const resolvedCity = city || destination.name
 
   const renderSection = () => {
     switch (activeTab) {
@@ -127,11 +146,14 @@ export function DestinationDashboard({
               positives={destination.positives}
               negatives={destination.negatives}
               weatherContent={weatherContent}
+              aiContext={aiContext}
             />
             <AIInsightBox
               destinationName={destination.name}
               summary={summary}
               positives={destination.positives}
+              vibes={aiContext?.vibes}
+              travelStyle={aiContext?.travelStyle}
             />
           </motion.div>
         )
@@ -165,6 +187,28 @@ export function DestinationDashboard({
             <MapSection mapContent={mapContent} markers={destination.mapMarkers} />
           </motion.div>
         )
+      case "transport":
+        return (
+          <motion.div key="transport" {...SECTION_VARIANTS}>
+            <TransportSection
+              transfers={destination.transfers ?? []}
+              cityName={resolvedCity}
+            />
+          </motion.div>
+        )
+      case "ai-insights":
+        return (
+          <motion.div key="ai-insights" {...SECTION_VARIANTS}>
+            <AITransformSection
+              vibes={aiContext?.vibes ?? []}
+              travelStyle={aiContext?.travelStyle ?? ""}
+              positives={destination.positives}
+              negatives={destination.negatives}
+              destinationName={destination.name}
+              confidenceBreakdown={aiContext?.confidenceBreakdown}
+            />
+          </motion.div>
+        )
       case "plan":
         return (
           <motion.div key="plan" {...SECTION_VARIANTS}>
@@ -178,7 +222,7 @@ export function DestinationDashboard({
 
   return (
     <div className="flex bg-background min-h-screen">
-      {/* Sidebar — sticky so it stays while page scrolls */}
+      {/* Sidebar */}
       <div className="hidden md:block sticky top-0 h-screen shrink-0">
         <DestinationSidebar
           activeTab={activeTab}
@@ -189,23 +233,20 @@ export function DestinationDashboard({
         />
       </div>
 
-      {/* Main content — natural scroll */}
+      {/* Main content */}
       <div className="flex-1 min-w-0">
-        {/* Hero */}
         <DestinationHero
           name={destination.name}
+          city={city}
           matchPercentage={destination.matchPercentage}
           image={destination.image}
-          tagline={squadTagline}
           squadLabel={squadLabel}
           squadEmoji={squadEmoji}
           weatherBadge={weatherBadge}
         />
 
-        {/* Tab bar — sticky under hero */}
         <NavTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Section content */}
         <div className="pb-24 md:pb-8">
           <AnimatePresence mode="wait">
             {renderSection()}
@@ -213,7 +254,6 @@ export function DestinationDashboard({
         </div>
       </div>
 
-      {/* Mobile bottom nav */}
       <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   )

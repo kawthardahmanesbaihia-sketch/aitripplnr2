@@ -6,6 +6,44 @@
 
 import { generateTravelImage } from "@/lib/replicate-generator"
 
+// ── Unsplash fallback ─────────────────────────────────────────────────────────
+
+const UNSPLASH_API = "https://api.unsplash.com/search/photos"
+
+async function fetchUnsplashFallback(
+  destination: string,
+  category: ImageCategory
+): Promise<string | null> {
+  const key = process.env.UNSPLASH_ACCESS_KEY
+  if (!key) return null
+
+  const QUERY_MAP: Record<ImageCategory, string> = {
+    city:        `${destination} city travel`,
+    nature:      `${destination} nature landscape`,
+    activities:  `${destination} travel activities`,
+    events:      `${destination} festival event`,
+    restaurants: `${destination} food restaurant`,
+    hotels:      `${destination} hotel accommodation`,
+  }
+
+  try {
+    const url = new URL(UNSPLASH_API)
+    url.searchParams.set("query",    QUERY_MAP[category] ?? `${destination} travel`)
+    url.searchParams.set("per_page", "1")
+    url.searchParams.set("orientation", "landscape")
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Client-ID ${key}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return (data.results?.[0]?.urls?.regular as string) ?? null
+  } catch {
+    return null
+  }
+}
+
 export type ImageCategory = "city" | "nature" | "activities" | "events" | "restaurants" | "hotels"
 
 /**
@@ -46,14 +84,22 @@ export async function generateCategoryImage(
     
     if (result?.url) {
       console.log(` CategoryImageGenerator: ✓ Successfully generated ${category} image`)
-      console.log(` CategoryImageGenerator: URL = ${result.url}`)
       return result.url
     }
 
-    console.warn(` CategoryImageGenerator: ✗ Failed to generate ${category} image - returned null`)
+    console.warn(` CategoryImageGenerator: Replicate returned null — trying Unsplash fallback`)
+    const unsplashUrl = await fetchUnsplashFallback(destination, category)
+    if (unsplashUrl) {
+      console.log(` CategoryImageGenerator: ✓ Unsplash fallback for ${category}`)
+      return unsplashUrl
+    }
+
+    console.warn(` CategoryImageGenerator: ✗ All sources failed for ${category}`)
     return null
   } catch (error) {
     console.error(` CategoryImageGenerator: Error generating ${category} image:`, error)
+    const unsplashUrl = await fetchUnsplashFallback(destination, category).catch(() => null)
+    if (unsplashUrl) return unsplashUrl
     return null
   }
 }

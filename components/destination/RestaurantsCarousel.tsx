@@ -1,50 +1,56 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Star, MapPin, ChevronLeft, ChevronRight } from "lucide-react"
+import { Star, MapPin, ChevronLeft, ChevronRight, ExternalLink, Clock } from "lucide-react"
 import { useRef } from "react"
 
 interface Restaurant {
-  name: string
-  rating: number
-  cuisine: string
-  description: string
-  price: string
-  priceLevel: "budget" | "mid-range" | "luxury"
-  address: string
-  image?: string
+  name:            string
+  rating:          number
+  userRatingsTotal?: number
+  cuisine:         string
+  description:     string
+  price:           string
+  priceLevel:      "budget" | "mid-range" | "luxury"
+  address:         string
+  image?:          string
+  openNow?:        boolean
+  mapsUrl?:        string
 }
 
-/* Light & dark variants — matched to travel-data cuisine strings */
 const CUISINE_TAGS: Record<string, string> = {
-  // Japanese
   "Japanese":              "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
   "Innovative Japanese":   "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
   "Ramen":                 "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  "Izakaya":               "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
-  "Sushi Conveyor":        "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
-  "Japanese with Entertainment": "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
-  // French / European
+  "Sushi":                 "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+  "Korean":                "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
   "French":                "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  "French-Balinese":       "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  "French-Moroccan":       "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   "Fine Dining":           "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   "Italian":               "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  "Italian-Mediterranean": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  // Asian
   "Thai":                  "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
-  "Thai Street Food":      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
-  "Balinese":              "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
   "Seafood":               "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  // Moroccan / African
   "Moroccan":              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-  "Contemporary Moroccan": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-  "Moroccan Street Food":  "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-  // Generic
+  "Mediterranean":         "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
+  "Indian":                "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+  "Chinese":               "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  "Vietnamese":            "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  "Steakhouse":            "bg-stone-100 text-stone-700 dark:bg-stone-800/30 dark:text-stone-300",
+  "Middle Eastern":        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+  "Greek":                 "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+  "Spanish":               "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  "Turkish":               "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  "Mexican":               "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+  "American":              "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   "Street Food":           "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
   "Local":                 "bg-muted text-muted-foreground",
 }
 const DEFAULT_TAG = "bg-muted text-muted-foreground"
+
+function formatReviewCount(n?: number): string {
+  if (!n) return ""
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
+  return String(n)
+}
 
 export function RestaurantsCarousel({ restaurants }: { restaurants: Restaurant[] }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -99,14 +105,27 @@ export function RestaurantsCarousel({ restaurants }: { restaurants: Restaurant[]
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none" }}
                 />
               ) : (
-                /* bg-muted auto-switches */
                 <div className="w-full h-full flex items-center justify-center bg-muted">
                   <span className="text-5xl">🍜</span>
                 </div>
               )}
+
+              {/* Price badge */}
               <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm rounded-full px-2.5 py-1">
                 <span className="text-xs font-bold text-foreground">{r.price}</span>
               </div>
+
+              {/* Open/Closed badge */}
+              {r.openNow !== undefined && (
+                <div className={`absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm ${
+                  r.openNow
+                    ? "bg-green-500/90 text-white"
+                    : "bg-red-500/90 text-white"
+                }`}>
+                  <Clock className="w-3 h-3" />
+                  {r.openNow ? "Open now" : "Closed"}
+                </div>
+              )}
             </div>
 
             {/* Body */}
@@ -116,8 +135,14 @@ export function RestaurantsCarousel({ restaurants }: { restaurants: Restaurant[]
                 <div className="flex items-center gap-1 shrink-0">
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                   <span className="text-xs font-bold text-card-foreground">{r.rating}</span>
+                  {r.userRatingsTotal && (
+                    <span className="text-xs text-muted-foreground">
+                      ({formatReviewCount(r.userRatingsTotal)})
+                    </span>
+                  )}
                 </div>
               </div>
+
               {/* Cuisine tags */}
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {r.cuisine.split(",").map((c, j) => {
@@ -130,16 +155,33 @@ export function RestaurantsCarousel({ restaurants }: { restaurants: Restaurant[]
                   )
                 })}
               </div>
+
               <div className="flex items-center gap-1 mb-2">
-                <MapPin className="w-3 h-3 text-muted-foreground" />
+                <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
                 <p className="text-xs text-muted-foreground truncate">{r.address}</p>
               </div>
+
               <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">
                 {r.description}
               </p>
-              <button className="w-full py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 dark:bg-orange-400/10 dark:hover:bg-orange-400/20 text-orange-700 dark:text-orange-400 text-xs font-semibold transition-colors">
-                Reserve a Table
-              </button>
+
+              <div className="flex gap-2">
+                {r.mapsUrl ? (
+                  <a
+                    href={r.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 dark:bg-blue-400/10 dark:hover:bg-blue-400/20 text-blue-700 dark:text-blue-400 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Maps
+                  </a>
+                ) : null}
+                <button className={`${r.mapsUrl ? "flex-1" : "w-full"} py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 dark:bg-orange-400/10 dark:hover:bg-orange-400/20 text-orange-700 dark:text-orange-400 text-xs font-semibold transition-colors`}>
+                  Reserve a Table
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}

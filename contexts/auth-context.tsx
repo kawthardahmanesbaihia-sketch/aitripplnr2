@@ -1,120 +1,116 @@
-'use client';
+"use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react"
 
 export interface User {
-  email: string;
-  username: string;
-  uid: string;
-  role: "user" | "agency";
+  uid:        string
+  email:      string
+  username:   string
+  role:       "user" | "agency"
+  full_name:  string | null
+  phone:      string | null
+  country:    string | null
+  city:       string | null
+  bio:        string | null
+  avatar_url: string | null
+  last_login: string | null
+  created_at: string | null
 }
 
 interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  signup: (username: string, email: string, password: string, role?: "user" | "agency") => Promise<void>;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  user:          User | null
+  isLoading:     boolean
+  signup:        (opts: SignupOpts) => Promise<void>
+  login:         (identifier: string, password: string) => Promise<void>
+  logout:        () => Promise<void>
+  refreshUser:   () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface SignupOpts {
+  fullName:  string
+  username:  string
+  email:     string
+  password:  string
+  role?:     "user" | "agency"
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser]         = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Restore session from localStorage on mount
+  const refreshUser = async () => {
+    try {
+      const res = await fetch("/api/profile", { credentials: "include" })
+      if (res.ok) {
+        const data = await res.json()
+        setUser(data)
+      } else {
+        setUser(null)
+      }
+    } catch {
+      setUser(null)
+    }
+  }
+
+  // Load session on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-      }
-    }
-    setIsLoading(false);
-  }, []);
+    refreshUser().finally(() => setIsLoading(false))
+  }, [])
 
-  // ✅ SIGNUP — persists to MySQL via /api/signup
-  const signup = async (username: string, email: string, password: string, role: "user" | "agency" = "user") => {
-    setIsLoading(true);
+  const signup = async ({ fullName, username, email, password, role = "user" }: SignupOpts) => {
+    setIsLoading(true)
     try {
-      const res = await fetch('/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, role }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Signup failed');
-      }
-
-      const userData: User = data.user;
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } catch (error) {
-      throw error;
+      const res = await fetch("/api/signup", {
+        method:      "POST",
+        headers:     { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ full_name: fullName, username, email, password, role }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Signup failed")
+      setUser(data.user)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  // ✅ LOGIN — verified against MySQL via /api/login
-  const login = async (username: string, password: string) => {
-    setIsLoading(true);
+  const login = async (identifier: string, password: string) => {
+    setIsLoading(true)
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
+      const res = await fetch("/api/login", {
+        method:      "POST",
+        headers:     { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ identifier, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Invalid credentials")
+      setUser(data.user)
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Invalid username or password');
+      if (typeof window !== "undefined") {
+        window.location.href = data.user.role === "agency" ? "/agency/dashboard" : "/choose-mode"
       }
-
-      const userData: User = data.user;
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-
-      // Redirect based on role
-      if (typeof window !== 'undefined') {
-        if (userData.role === 'agency') {
-          window.location.href = '/agency/dashboard';
-        } else {
-          window.location.href = '/choose-mode';
-        }
-      }
-    } catch (error) {
-      throw error;
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  // ✅ LOGOUT
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
+  const logout = async () => {
+    await fetch("/api/logout", { method: "POST", credentials: "include" })
+    setUser(null)
+  }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, signup, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
-// ✅ HOOK
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider")
+  return ctx
 }

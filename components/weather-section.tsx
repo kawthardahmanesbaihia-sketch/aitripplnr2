@@ -147,9 +147,11 @@ export function WeatherSection({
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold">Weather Forecast</h3>
+            <h3 className="text-2xl font-bold">
+              {weather.type === "real" ? "Weather Forecast" : "Climate Estimate"}
+            </h3>
             <Badge variant={weather.type === "real" ? "default" : "secondary"}>
-              {weather.type === "real" ? "Live Weather" : "Estimated"}
+              {weather.type === "real" ? "Live Forecast" : "Historical Estimate"}
             </Badge>
           </div>
 
@@ -193,8 +195,8 @@ export function WeatherSection({
             {/* Data source info */}
             <div className="border-t border-border/50 pt-4 text-xs text-muted-foreground">
               {weather.type === "real"
-                ? "Real-time weather data (travel within 5 days)"
-                : "Climate-based estimate (based on historical patterns for this month)"}
+                ? "Live forecast from OpenWeatherMap — accurate for travel within 7 days."
+                : "Historical climate estimate based on seasonal averages. Not a live weather forecast."}
             </div>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { usePackages } from "@/hooks/usePackages";
 import { PackageCard } from "@/components/PackageCard";
 import { ArrowLeft, Search, Plus, Edit, Trash2 } from "lucide-react";
@@ -20,7 +20,7 @@ export default function PackageListPage() {
 
   useEffect(() => {
     if (user) {
-      const packages = getAgencyPackages(user.id);
+      const packages = getAgencyPackages(user.uid);
       setAgencyPackages(packages);
     }
   }, [user, getAgencyPackages]);

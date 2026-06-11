@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/auth-context";
 import { useLeads } from "@/hooks/useLeads";
 import { useTaste } from "@/hooks/useTaste";
 import type { Lead, LeadFilters } from "@/types/lead";
@@ -40,7 +40,7 @@ export default function AgencyLeadsPage() {
     filterLeads,
     getLeadsByDestination,
     getRecentLeads
-  } = useLeads(user?.id);
+  } = useLeads(user?.uid);
   const { loadTasteProfile } = useTaste();
   
   const [filters, setFilters] = useState<LeadFilters>({});

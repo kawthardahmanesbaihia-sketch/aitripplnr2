@@ -586,12 +586,12 @@ const CITY_PROFILES: Record<string, CityRecommendation[]> = {
     { city: "New York",         why: "World-class culture, dining and nightlife",           bestFor: ["cultural", "nightlife", "food"],   budgetFit: "all" },
     { city: "Los Angeles",      why: "Beach, entertainment and outdoor lifestyle",           bestFor: ["beach", "adventure", "party"],      budgetFit: "mid-range" },
     { city: "New Orleans",      why: "Vibrant music scene and rich Creole food culture",    bestFor: ["nightlife", "food", "cultural"],    budgetFit: "budget" },
-    { city: "National Parks",   why: "Stunning wilderness — Grand Canyon, Yellowstone",     bestFor: ["nature", "hiking", "adventure"],    budgetFit: "budget" },
-    { city: "Las Vegas",        why: "Entertainment, nightlife and luxury resorts",         bestFor: ["party", "luxury", "nightlife"],     budgetFit: "luxury" },
+    { city: "Las Vegas",        why: "Entertainment, nightlife and luxury resorts — gateway to the Grand Canyon", bestFor: ["party", "luxury", "nature"], budgetFit: "mid-range" },
+    { city: "San Francisco",    why: "Bay city of innovation, hills and world-class dining",bestFor: ["cultural", "food", "adventure"],    budgetFit: "mid-range" },
   ],
   BR: [
     { city: "Rio de Janeiro",   why: "Carnival, beaches and legendary nightlife",           bestFor: ["beach", "party", "nightlife"],      budgetFit: "mid-range" },
-    { city: "Amazon Basin",     why: "Unmatched wildlife and rainforest adventure",         bestFor: ["nature", "adventure", "wildlife"],  budgetFit: "budget" },
+    { city: "Manaus",           why: "Amazon gateway city with jungle lodges and wildlife", bestFor: ["nature", "adventure", "wildlife"],  budgetFit: "budget" },
     { city: "São Paulo",        why: "Cultural melting pot with world-class gastronomy",    bestFor: ["food", "cultural", "nightlife"],    budgetFit: "all" },
     { city: "Fernando de Noronha", why: "Remote paradise with pristine diving and beaches", bestFor: ["beach", "diving", "relaxation"],   budgetFit: "luxury" },
   ],
@@ -645,7 +645,7 @@ const CITY_PROFILES: Record<string, CityRecommendation[]> = {
   ],
   MA: [
     { city: "Marrakech",        why: "Labyrinthine medina, souks and rooftop dining",      bestFor: ["cultural", "food", "adventure"],    budgetFit: "all" },
-    { city: "Sahara Desert",    why: "Camel treks and sleeping under a canopy of stars",   bestFor: ["adventure", "nature", "cultural"],  budgetFit: "mid-range" },
+    { city: "Merzouga",         why: "Desert town on the edge of the Sahara — camel treks and star camps", bestFor: ["adventure", "nature", "photography"], budgetFit: "mid-range" },
     { city: "Essaouira",        why: "Laid-back Atlantic coast with kite-surfing culture", bestFor: ["beach", "adventure", "relaxation"], budgetFit: "budget" },
   ],
   AE: [
@@ -654,9 +654,9 @@ const CITY_PROFILES: Record<string, CityRecommendation[]> = {
   ],
   AU: [
     { city: "Sydney",           why: "Iconic harbour, beaches and cosmopolitan dining",    bestFor: ["beach", "food", "cultural"],        budgetFit: "all" },
-    { city: "Great Barrier Reef", why: "World's largest coral ecosystem for diving",      bestFor: ["diving", "nature", "adventure"],    budgetFit: "mid-range" },
+    { city: "Cairns",           why: "Tropical gateway to the Great Barrier Reef and rainforest", bestFor: ["diving", "nature", "adventure"], budgetFit: "mid-range" },
     { city: "Melbourne",        why: "Arts, coffee culture and laneway bar scene",         bestFor: ["cultural", "food", "nightlife"],    budgetFit: "all" },
-    { city: "Uluru & Outback",  why: "Ancient Aboriginal culture and dramatic landscapes", bestFor: ["cultural", "adventure", "nature"],  budgetFit: "mid-range" },
+    { city: "Alice Springs",    why: "Red Centre base for Uluru and Aboriginal culture",   bestFor: ["cultural", "adventure", "nature"],  budgetFit: "mid-range" },
   ],
   SG: [
     { city: "Singapore",        why: "Futuristic city-state with incredible food diversity", bestFor: ["food", "city", "cultural"],       budgetFit: "all" },
@@ -673,13 +673,13 @@ const CITY_PROFILES: Record<string, CityRecommendation[]> = {
   ],
   VN: [
     { city: "Hanoi",            why: "Chaotic yet charming capital with superb street food", bestFor: ["food", "cultural", "history"],    budgetFit: "budget" },
-    { city: "Ha Long Bay",      why: "Dramatic karst islands best explored by boat",        bestFor: ["nature", "adventure", "relaxation"], budgetFit: "mid-range" },
-    { city: "Hoi An",           why: "Lantern-lit Old Town — perfect for food and culture", bestFor: ["cultural", "food", "beach"],       budgetFit: "budget" },
+    { city: "Ha Long City",     why: "Gateway to Ha Long Bay's dramatic karst islands",      bestFor: ["nature", "adventure", "relaxation"], budgetFit: "mid-range" },
+    { city: "Hoi An",           why: "Lantern-lit Old Town — perfect for food and culture",  bestFor: ["cultural", "food", "beach"],       budgetFit: "budget" },
   ],
   PE: [
-    { city: "Machu Picchu",     why: "Legendary Inca citadel — a bucket-list must",        bestFor: ["history", "adventure", "cultural"], budgetFit: "mid-range" },
+    { city: "Cusco",            why: "Inca capital at altitude — base for Machu Picchu treks", bestFor: ["history", "adventure", "cultural"], budgetFit: "mid-range" },
     { city: "Lima",             why: "South America's gastronomic capital",                bestFor: ["food", "cultural", "nightlife"],    budgetFit: "all" },
-    { city: "Amazon Basin",     why: "Untouched rainforest with extraordinary wildlife",   bestFor: ["nature", "adventure", "wildlife"],  budgetFit: "mid-range" },
+    { city: "Iquitos",          why: "Amazon jungle city accessible only by boat or plane", bestFor: ["nature", "adventure", "wildlife"],  budgetFit: "mid-range" },
   ],
   CH: [
     { city: "Zurich",           why: "Clean, wealthy city with excellent museums and food", bestFor: ["cultural", "food", "luxury"],      budgetFit: "luxury" },
@@ -697,9 +697,9 @@ const CITY_PROFILES: Record<string, CityRecommendation[]> = {
     { city: "Hvar Island",      why: "Glamorous island with beach clubs and lavender",    bestFor: ["party", "beach", "luxury"],         budgetFit: "luxury" },
   ],
   ZA: [
-    { city: "Cape Town",        why: "Stunning mountain-sea scenery and wine routes",     bestFor: ["nature", "food", "adventure"],      budgetFit: "all" },
-    { city: "Kruger National Park", why: "Premier Big Five safari destination",          bestFor: ["wildlife", "nature", "adventure"],  budgetFit: "all" },
-    { city: "Garden Route",     why: "Scenic coastal drive with beaches and forests",    bestFor: ["nature", "adventure", "road-trip"], budgetFit: "budget" },
+    { city: "Cape Town",        why: "Stunning mountain-sea scenery and wine routes",      bestFor: ["nature", "food", "adventure"],      budgetFit: "all" },
+    { city: "Hoedspruit",       why: "Safari town — gateway to Kruger and Big Five game", bestFor: ["wildlife", "nature", "adventure"],  budgetFit: "mid-range" },
+    { city: "George",           why: "Garden Route hub with beaches, forests and golf",   bestFor: ["nature", "adventure", "road-trip"], budgetFit: "budget" },
   ],
   
   DZ: [
@@ -748,8 +748,8 @@ const CITY_PROFILES: Record<string, CityRecommendation[]> = {
 ],
   NZ: [
     { city: "Queenstown",       why: "Adventure capital of the world — bungee, skiing, skydiving", bestFor: ["adventure", "skiing", "party"], budgetFit: "mid-range" },
-    { city: "Fiordland / Milford Sound", why: "Other-worldly fiords and glacial scenery", bestFor: ["nature", "hiking", "photography"], budgetFit: "mid-range" },
-    { city: "Rotorua",          why: "Māori culture meets volcanic geothermal landscape", bestFor: ["cultural", "adventure", "nature"], budgetFit: "budget" },
+    { city: "Te Anau",          why: "Lakeside town — base for Fiordland and Milford Sound", bestFor: ["nature", "hiking", "photography"], budgetFit: "mid-range" },
+    { city: "Rotorua",          why: "Māori culture meets volcanic geothermal landscape",   bestFor: ["cultural", "adventure", "nature"], budgetFit: "budget" },
   ],
 }
 
