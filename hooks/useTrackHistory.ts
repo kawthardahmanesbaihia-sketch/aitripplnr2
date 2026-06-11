@@ -20,12 +20,15 @@ export function useTrackHistory() {
     async (payload: TrackHistoryPayload) => {
       if (!user) return
       try {
-        await fetch("/api/profile/history", {
+        const res = await fetch("/api/profile/history", {
           method:      "POST",
           headers:     { "Content-Type": "application/json" },
           credentials: "include",
           body:        JSON.stringify(payload),
         })
+        if (!res.ok && process.env.NODE_ENV === "development") {
+          console.warn("[useTrackHistory] POST failed:", res.status)
+        }
       } catch {
         // Non-critical — silently discard
       }

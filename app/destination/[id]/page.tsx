@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useRef, useState, Suspense } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Sparkles } from "lucide-react"
@@ -16,6 +16,8 @@ import { generateCategoryImage } from "@/lib/category-image-generator"
 import { fetchCountryImage } from "@/lib/country-image-generator"
 import { ItineraryGenerator } from "@/components/ItineraryGenerator"
 import { DestinationDashboard } from "@/components/destination/DestinationDashboard"
+import { useTrackHistory } from "@/hooks/useTrackHistory"
+import { useAuth } from "@/contexts/auth-context"
 
 interface DestinationData {
   name: string
@@ -292,6 +294,10 @@ function DestinationPageInner() {
   const squadConfig = SQUAD_CONFIG[squad] ?? SQUAD_CONFIG.solo
   const cityFromUrl = searchParams.get("city") || ""
 
+  const { user } = useAuth()
+  const track = useTrackHistory()
+  const historyTracked = useRef(false)
+
   const [destination, setDestination] = useState<DestinationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [travelDates, setTravelDates] = useState<{ start: string; end: string } | null>(null)
@@ -487,6 +493,7 @@ function DestinationPageInner() {
             country.name,
           ),
         })
+
       } catch {
         const rawPositives: string[] = country.positives || []
         const rawNegatives: string[] = country.negatives || []
@@ -509,6 +516,22 @@ function DestinationPageInner() {
 
     loadDestination()
   }, [params])
+
+  // Separate effect — fires when destination is ready AND user is loaded.
+  // Avoids the stale closure where track() captured user=null at mount time.
+  useEffect(() => {
+    if (!destination || !user || historyTracked.current) return
+    historyTracked.current = true
+    track({
+      country:          destination.name,
+      city:             resolvedCity                   || undefined,
+      country_code:     getCountryCode(destination.name) || undefined,
+      match_percentage: destination.matchPercentage,
+      travel_style:     aiContext?.travelStyle         || undefined,
+      budget:           getBudgetFromStorage(),
+      image_url:        destination.image              || undefined,
+    })
+  }, [destination, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (

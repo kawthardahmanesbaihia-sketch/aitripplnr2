@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
-import { PersonalInfoTab }       from "./_components/PersonalInfoTab"
-import { TravelPreferencesTab }  from "./_components/TravelPreferencesTab"
-import { TravelHistoryTab }      from "./_components/TravelHistoryTab"
-import { FavoritesTab }          from "./_components/FavoritesTab"
-import { SecurityTab }           from "./_components/SecurityTab"
-import { AgencyTab }             from "./_components/AgencyTab"
+import { PersonalInfoTab } from "./_components/PersonalInfoTab"
+import { FavoritesTab }   from "./_components/FavoritesTab"
+import { SecurityTab }    from "./_components/SecurityTab"
+import { AgencyTab }      from "./_components/AgencyTab"
 import { Loader2 } from "lucide-react"
 
 export default function ProfilePage() {
@@ -40,10 +38,8 @@ export default function ProfilePage() {
         <p className="text-muted-foreground mb-8">Manage your account and preferences</p>
 
         <Tabs defaultValue="personal">
-          <TabsList className={`grid w-full mb-8 ${isAgency ? "grid-cols-6" : "grid-cols-5"}`}>
+          <TabsList className={`grid w-full mb-8 ${isAgency ? "grid-cols-4" : "grid-cols-3"}`}>
             <TabsTrigger value="personal">Personal</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="favorites">Favorites</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             {isAgency && <TabsTrigger value="agency">Agency</TabsTrigger>}
@@ -51,12 +47,6 @@ export default function ProfilePage() {
 
           <TabsContent value="personal">
             <PersonalInfoTab />
-          </TabsContent>
-          <TabsContent value="preferences">
-            <TravelPreferencesTab />
-          </TabsContent>
-          <TabsContent value="history">
-            <TravelHistoryTab />
           </TabsContent>
           <TabsContent value="favorites">
             <FavoritesTab />

@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { CloudSun, Sparkles } from "lucide-react"
 import { getCountryFlagUrl } from "@/lib/destination-image-generator"
 import { useEffect, useState } from "react"
+import { FavoriteButton } from "@/components/FavoriteButton"
 
 interface DestinationHeroProps {
   name: string            // country name
@@ -103,6 +104,16 @@ export function DestinationHero({
             <CloudSun className="w-3.5 h-3.5 text-white" />
             <span className="text-white text-sm font-medium">{weatherBadge ?? "Comfortable climate"}</span>
           </div>
+
+          {/* Favorite */}
+          <FavoriteButton
+            country={name}
+            city={city}
+            destinationName={city || name}
+            imageUrl={image}
+            matchPercentage={matchPercentage}
+            size="sm"
+          />
         </motion.div>
       </div>
 

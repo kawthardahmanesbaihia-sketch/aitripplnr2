@@ -1,6 +1,9 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
+import { useAuth } from "@/contexts/auth-context"
+import { useTrackHistory } from "@/hooks/useTrackHistory"
+import { FavoriteButton } from "@/components/FavoriteButton"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import {
@@ -187,6 +190,10 @@ function SectionLoader({ label }: { label: string }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ResultsPage() {
+  const { user } = useAuth()
+  const track    = useTrackHistory()
+  const historyTracked = useRef(false)
+
   // ── Session data ────────────────────────────────────────────────────────────
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [isLoading,   setIsLoading]   = useState(true)
@@ -203,6 +210,24 @@ export default function ResultsPage() {
   // ── Per-destination full API data ─────────────────────────────────────────────
   const [destDetails,  setDestDetails]  = useState<Record<string, DestinationApiData>>({})
   const [detailLoading, setDetailLoading] = useState<Record<string, boolean>>({})
+
+  // ── Track history once both session data and auth are ready ──────────────────
+  useEffect(() => {
+    if (!user || !sessionData || historyTracked.current) return
+    historyTracked.current = true
+    const budget = sessionStorage.getItem("selectedBudget") || undefined
+    sessionData.countries.slice(0, 3).forEach(d => {
+      track({
+        country:          d.name,
+        city:             d.city             || undefined,
+        country_code:     d.code             || undefined,
+        match_percentage: Math.round(d.matchPercentage),
+        travel_style:     d.vibe             || undefined,
+        budget,
+        image_url:        d.image            || undefined,
+      })
+    })
+  }, [user, sessionData]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prevent duplicate in-flight requests
   const fetchedGalleries = useRef<Set<string>>(new Set())
@@ -599,7 +624,7 @@ export default function ResultsPage() {
 
                   {/* ── Bottom: CTAs + thumbnail strip ── */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
-                    <div className="flex items-center justify-center gap-3 px-6 pb-4">
+                    <div className="flex items-center justify-center gap-3 px-6 pb-4 flex-wrap">
                       <Button asChild size="lg" className="rounded-full px-7 py-5 text-sm font-semibold shadow-lg">
                         <Link href="/itinerary">
                           <Calendar className="mr-2 h-4 w-4" />
@@ -625,6 +650,13 @@ export default function ResultsPage() {
                           Full Destination Guide
                         </Link>
                       </Button>
+                      <FavoriteButton
+                        country={dest.name}
+                        city={dest.city}
+                        destinationName={city}
+                        imageUrl={dest.image}
+                        matchPercentage={Math.round(dest.matchPercentage)}
+                      />
                     </div>
 
                     {/* Photo thumbnails */}
