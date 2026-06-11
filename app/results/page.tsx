@@ -16,6 +16,8 @@ import {
 import Link from "next/link"
 import { usePackages } from "@/hooks/usePackages"
 import { PackageCard } from "@/components/PackageCard"
+import { BookingModal } from "@/components/BookingModal"
+import type { Package } from "@/types/package"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -204,6 +206,9 @@ export default function ResultsPage() {
   // ── Multi-destination navigation ─────────────────────────────────────────────
   const [activeDestIndex, setActiveDestIndex] = useState(0)
   const [slideDir, setSlideDir] = useState<1 | -1>(1)
+
+  // ── Booking modal ─────────────────────────────────────────────────────────────
+  const [bookingPkg, setBookingPkg] = useState<Package | null>(null)
 
   // ── Per-destination gallery state ─────────────────────────────────────────────
   const [destGalleries,   setDestGalleries]   = useState<Record<string, string[]>>({})
@@ -1285,7 +1290,11 @@ export default function ResultsPage() {
                 className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
               >
                 {matchedPackages.map((pkg) => (
-                  <PackageCard key={pkg.id} package={pkg} />
+                  <PackageCard
+                    key={pkg.id}
+                    package={pkg}
+                    onBook={user?.role === "user" ? setBookingPkg : undefined}
+                  />
                 ))}
               </motion.div>
             </AnimatePresence>
@@ -1309,6 +1318,13 @@ export default function ResultsPage() {
           )}
         </section>
       )}
+
+      {/* ── Booking modal ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {bookingPkg && (
+          <BookingModal pkg={bookingPkg} onClose={() => setBookingPkg(null)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

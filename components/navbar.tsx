@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Plane, Menu, X, User, LogOut, Heart, Clock, Building2, LayoutDashboard } from "lucide-react"
+import { Plane, Menu, X, User, LogOut, Heart, Clock, Building2, LayoutDashboard, CalendarCheck, ClipboardList } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useLanguage } from "@/components/language-provider"
@@ -53,14 +53,16 @@ export function Navbar() {
   }
 
   const travelerMenu = [
-    { label: "My Profile",      href: "/profile",           icon: User          },
+    { label: "My Profile",      href: "/profile",               icon: User          },
+    { label: "My Bookings",     href: "/bookings",              icon: CalendarCheck },
     { label: "Travel History",  href: "/profile?tab=history",   icon: Clock         },
     { label: "Favorites",       href: "/profile?tab=favorites", icon: Heart         },
   ]
 
   const agencyMenu = [
-    { label: "Agency Profile",  href: "/profile?tab=agency",    icon: Building2     },
+    { label: "Agency Profile",  href: "/profile?tab=agency",    icon: Building2       },
     { label: "Dashboard",       href: "/agency/dashboard",       icon: LayoutDashboard },
+    { label: "Agency Bookings", href: "/agency/bookings",        icon: ClipboardList   },
   ]
 
   const menuItems = user?.role === "agency" ? agencyMenu : travelerMenu
