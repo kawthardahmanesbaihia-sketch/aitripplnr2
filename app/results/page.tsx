@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { useTrackHistory } from "@/hooks/useTrackHistory"
 import { FavoriteButton } from "@/components/FavoriteButton"
@@ -11,9 +11,11 @@ import {
   MapPin, Star, Utensils, Hotel, Activity,
   Mountain, Waves, Landmark, Camera, Globe, Sun,
   BarChart3, Heart, RefreshCw, Loader2, AlertTriangle,
-  Wind, Droplets, Thermometer, Bus, Train, Car,
+  Wind, Droplets, Thermometer, Bus, Train, Car, Briefcase,
 } from "lucide-react"
 import Link from "next/link"
+import { usePackages } from "@/hooks/usePackages"
+import { PackageCard } from "@/components/PackageCard"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -193,6 +195,7 @@ export default function ResultsPage() {
   const { user } = useAuth()
   const track    = useTrackHistory()
   const historyTracked = useRef(false)
+  const { packages: allPackages, isLoading: packagesLoading } = usePackages()
 
   // ── Session data ────────────────────────────────────────────────────────────
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
@@ -254,6 +257,40 @@ export default function ResultsPage() {
   }, [])
 
   const destinations = sessionData?.countries?.slice(0, 3) ?? []
+
+  // ── Filter packages for the currently active destination only ────────────────
+  // No tags, no scoring, no fallback. A package appears only when its country or
+  // destination field matches the active card's country or city — nothing else.
+  const matchedPackages = useMemo(() => {
+    if (!destinations.length || packagesLoading) return []
+    const activeDest = destinations[activeDestIndex]
+    if (!activeDest) return []
+
+    const visible = allPackages.filter(p => (p.status ?? "active") !== "draft")
+    if (!visible.length) return []
+
+    const countryKey = activeDest.name.toLowerCase()
+    const cityKey    = (activeDest.city ?? "").toLowerCase()
+
+    return visible.filter(pkg => {
+      const pkgCountry = (pkg.country ?? "").toLowerCase()
+      const pkgDest    = pkg.destination.toLowerCase()
+
+      const countryMatch =
+        countryKey.length > 0 && (
+          pkgCountry === countryKey || pkgCountry.includes(countryKey) || countryKey.includes(pkgCountry) ||
+          pkgDest    === countryKey || pkgDest.includes(countryKey)    || countryKey.includes(pkgDest)
+        )
+
+      const cityMatch =
+        cityKey.length > 0 && (
+          pkgCountry === cityKey || pkgCountry.includes(cityKey) || cityKey.includes(pkgCountry) ||
+          pkgDest    === cityKey || pkgDest.includes(cityKey)    || cityKey.includes(pkgDest)
+        )
+
+      return countryMatch || cityMatch
+    })
+  }, [allPackages, activeDestIndex, destinations, packagesLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Lazy fetch gallery for a destination ──────────────────────────────────────
   const fetchGallery = useCallback(async (dest: Destination) => {
@@ -1224,6 +1261,54 @@ export default function ResultsPage() {
         </motion.div>
       </AnimatePresence>
 
+      {/* ── Available Packages (scoped to active destination only) ──────── */}
+      {!packagesLoading && !isLoading && sessionData && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 border-t border-border/50">
+          <div className="flex items-center gap-2 mb-8">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+              <Briefcase className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <h2 className="text-2xl font-bold">Available Packages</h2>
+            <span className="text-sm text-muted-foreground ml-1">
+              — {destinations[activeDestIndex]?.city || destinations[activeDestIndex]?.name || "this destination"}
+            </span>
+          </div>
+
+          {matchedPackages.length > 0 ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`packages-${activeDestIndex}`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
+                className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {matchedPackages.map((pkg) => (
+                  <PackageCard key={pkg.id} package={pkg} />
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          ) : (
+            <motion.div
+              key={`packages-empty-${activeDestIndex}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl border bg-card p-8 text-center"
+            >
+              <Briefcase className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">
+                No packages available yet for{" "}
+                <span className="font-medium text-foreground">
+                  {destinations[activeDestIndex]?.city || destinations[activeDestIndex]?.name}
+                </span>
+                .
+              </p>
+            </motion.div>
+          )}
+        </section>
+      )}
     </div>
   )
 }
