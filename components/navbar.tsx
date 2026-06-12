@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import {
   Plane, Menu, X, User, LogOut, Heart, Clock,
-  Building2, LayoutDashboard, CalendarCheck, ClipboardList, Bell,
+  Building2, LayoutDashboard, CalendarCheck, ClipboardList, Bell, BarChart3,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageSwitcher } from "@/components/language-switcher"
@@ -151,6 +151,7 @@ export function Navbar() {
     { label: "Agency Profile",  href: "/profile?tab=agency",    icon: Building2       },
     { label: "Dashboard",       href: "/agency/dashboard",       icon: LayoutDashboard },
     { label: "Agency Bookings", href: "/agency/bookings",        icon: ClipboardList   },
+    { label: "Analytics",       href: "/agency/analytics",       icon: BarChart3       },
   ]
 
   const menuItems = user?.role === "agency" ? agencyMenu : travelerMenu
