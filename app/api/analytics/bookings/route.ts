@@ -13,6 +13,11 @@ interface KpiRow extends RowDataPacket {
   pending:          number | bigint
   declined:         number | bigint
   unique_travelers: number | bigint
+  this_week:        number | bigint | null
+  acceptance_rate:  number | string  | null
+  overdue_pending:  number | bigint | null
+  this_month:       number | bigint | null
+  last_month:       number | bigint | null
 }
 
 interface TopPackageRow extends RowDataPacket {
@@ -63,11 +68,20 @@ export async function GET(req: NextRequest) {
     // A. KPI summary
     db.query<KpiRow[]>(
       `SELECT
-         COUNT(*)                           AS total,
-         SUM(status = 'accepted')           AS accepted,
-         SUM(status = 'pending')            AS pending,
-         SUM(status = 'declined')           AS declined,
-         COUNT(DISTINCT traveler_user_id)   AS unique_travelers
+         COUNT(*)                                                                                                  AS total,
+         SUM(status = 'accepted')                                                                                  AS accepted,
+         SUM(status = 'pending')                                                                                   AS pending,
+         SUM(status = 'declined')                                                                                  AS declined,
+         COUNT(DISTINCT traveler_user_id)                                                                          AS unique_travelers,
+         SUM(created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY))                                                       AS this_week,
+         ROUND(100.0 * SUM(status = 'accepted') / NULLIF(COUNT(*), 0), 1)                                        AS acceptance_rate,
+         SUM(status = 'pending' AND TIMESTAMPDIFF(HOUR, created_at, NOW()) > 24)                                  AS overdue_pending,
+         SUM(YEAR(created_at) = YEAR(NOW())
+           AND MONTH(created_at) = MONTH(NOW())
+           AND DAY(created_at) <= DAY(NOW()))                                                                      AS this_month,
+         SUM(YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))
+           AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))
+           AND DAY(created_at) <= DAY(NOW()))                                                                      AS last_month
        FROM package_booking_requests
        WHERE agency_user_id = ?`,
       [uid]
@@ -128,6 +142,12 @@ export async function GET(req: NextRequest) {
 
   const kpi = kpiRows[0] ?? { total: 0, accepted: 0, pending: 0, declined: 0, unique_travelers: 0 }
 
+  const thisMonth = Number(kpi.this_month ?? 0)
+  const lastMonth = Number(kpi.last_month ?? 0)
+  const percentageChange: number | null = lastMonth === 0
+    ? null
+    : Math.round(((thisMonth - lastMonth) / lastMonth) * 100)
+
   return NextResponse.json({
     kpi: {
       total:            Number(kpi.total),
@@ -135,6 +155,12 @@ export async function GET(req: NextRequest) {
       pending:          Number(kpi.pending),
       declined:         Number(kpi.declined),
       unique_travelers: Number(kpi.unique_travelers),
+      thisWeek:         Number(kpi.this_week        ?? 0),
+      acceptanceRate:   Number(kpi.acceptance_rate  ?? 0),
+      overduePending:   Number(kpi.overdue_pending  ?? 0),
+      thisMonth,
+      lastMonth,
+      percentageChange,
     },
     topPackages: (topPkgRows as TopPackageRow[]).map(r => ({
       package_id:     r.package_id,
