@@ -166,10 +166,10 @@ export function Navbar() {
       animate={{ y: 0 }}
       transition={{ duration: 0.6 }}
       className={cn(
-        "sticky top-0 z-50 w-full border-b backdrop-blur-lg transition-all duration-300",
+        "sticky top-0 z-50 w-full border-b transition-all duration-500",
         isScrolled
-          ? "border-border/40 bg-background/90 shadow-lg shadow-primary/10"
-          : "border-transparent bg-transparent",
+          ? "border-border/30 bg-background/80 shadow-lg shadow-black/10 backdrop-blur-xl"
+          : "border-white/10 bg-white/[0.03] backdrop-blur-md dark:bg-black/[0.04]",
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">

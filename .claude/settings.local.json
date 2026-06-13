@@ -14,7 +14,13 @@
       "WebFetch(domain:developer.hotelbeds.com)",
       "WebFetch(domain:www.altexsoft.com)",
       "Bash(npx tsc *)",
-      "Bash(node test-scoring.mjs)"
+      "Bash(node test-scoring.mjs)",
+      "Bash(find \"/c/Users/onteec/Downloads/aitripnew/hooks\" -type f -name \"*.ts\" -exec grep -l \"export\" {} ;)",
+      "Bash(wc -l \"/c/Users/onteec/Downloads/aitripnew/lib\"/*.ts)",
+      "Bash(git -C \"/c/Users/onteec/Downloads/aitripnew\" log --oneline -20)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "Bash(xargs grep -l \"analyzeImages\\\\|analyzeImagesForTravel\")"
     ]
   }
 }

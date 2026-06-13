@@ -78,7 +78,10 @@ export default function ContactPage() {
                   <Mail className="h-6 w-6" />
                 </div>
                 <h3 className="mb-2 font-semibold">{t("email")}</h3>
-                <p className="text-sm text-muted-foreground">project@tripplanner.ai</p>
+                <p className="text-sm text-muted-foreground">222232014017@univ-chlef.dz
+                  222232010918@univ-chlef.dz
+                  232332029110@univ-chlef.dz
+                </p>
               </Card>
 
               <Card className="border-2 bg-card/50 p-6 backdrop-blur-sm">
@@ -86,7 +89,7 @@ export default function ContactPage() {
                   <MapPin className="h-6 w-6" />
                 </div>
                 <h3 className="mb-2 font-semibold">Location</h3>
-                <p className="text-sm text-muted-foreground">University Campus</p>
+                <p className="text-sm text-muted-foreground">Hassiba Benbouali University of Chlef (UHBC), Ouled Fares</p>
               </Card>
 
               <Card className="border-2 bg-card/50 p-6 backdrop-blur-sm">
@@ -94,7 +97,7 @@ export default function ContactPage() {
                   <Globe className="h-6 w-6" />
                 </div>
                 <h3 className="mb-2 font-semibold">Project Type</h3>
-                <p className="text-sm text-muted-foreground">Graduation Project 2025</p>
+                <p className="text-sm text-muted-foreground">Graduation Project 2026</p>
               </Card>
             </motion.div>
 

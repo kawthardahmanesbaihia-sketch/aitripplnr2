@@ -4,79 +4,82 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── LIGHT MODE ───────────────────────────────────────────────────────────── */
 :root {
-  --background: #FFFFFF;
-  --foreground: #02131B;
-  --card: #F5F7F6;
-  --card-foreground: #02131B;
-  --popover: #F5F7F6;
-  --popover-foreground: #02131B;
-  --primary: #16A34A;
-  --primary-foreground: #FFFFFF;
-  --secondary: #DCFCE7;
-  --secondary-foreground: #02131B;
-  --muted: #F5F7F6;
+  --background: #F3FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+  --primary: #32D4F5;
+  --primary-foreground: #0F172A;
+  --secondary: #EAF6F9;
+  --secondary-foreground: #0F172A;
+  --muted: #EAF6F9;
   --muted-foreground: #64748B;
-  --accent: #16A34A;
-  --accent-foreground: #FFFFFF;
+  --accent: #EAF6F9;
+  --accent-foreground: #0F172A;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #E2E8F0;
+  --border: #DCEEF4;
   --input: #FFFFFF;
-  --ring: #16A34A;
-  --primary-dark: #15803D;
-  --chart-1: #16A34A;
-  --chart-2: #3B82F6;
-  --chart-3: #10B981;
+  --ring: #32D4F5;
+  --primary-dark: #11C5B9;
+  --chart-1: #32D4F5;
+  --chart-2: #11C5B9;
+  --chart-3: #8AE7FF;
   --chart-4: #F59E0B;
   --chart-5: #EF4444;
   --radius: 1rem;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #02131B;
-  --sidebar-primary: #16A34A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5F7F6;
-  --sidebar-accent-foreground: #02131B;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #16A34A;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #32D4F5;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: #EAF6F9;
+  --sidebar-accent-foreground: #0F172A;
+  --sidebar-border: #DCEEF4;
+  --sidebar-ring: #32D4F5;
 }
 
+/* ── DARK MODE ────────────────────────────────────────────────────────────── */
 .dark {
-  --background: #02131B;
+  --background: #030B12;
   --foreground: #FFFFFF;
-  --card: #17394B;
+  --card: #071A24;
   --card-foreground: #FFFFFF;
-  --popover: #17394B;
+  --popover: #071A24;
   --popover-foreground: #FFFFFF;
-  --primary: #EFEC07;
-  --primary-foreground: #02131B;
-  --secondary: #1A4558;
+  --primary: #53D8F8;
+  --primary-foreground: #030B12;
+  --secondary: #0D2432;
   --secondary-foreground: #FFFFFF;
-  --muted: #17394B;
-  --muted-foreground: #A0B3C0;
-  --accent: #EFEC07;
-  --accent-foreground: #02131B;
+  --muted: #071A24;
+  --muted-foreground: #AAB5C0;
+  --accent: #0D2432;
+  --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #1E4A5E;
-  --input: #17394B;
-  --ring: #EFEC07;
-  --primary-dark: #D4D006;
-  --chart-1: #EFEC07;
-  --chart-2: #3B82F6;
-  --chart-3: #10B981;
+  --border: #1E4557;
+  --input: #071A24;
+  --ring: #53D8F8;
+  --primary-dark: #18C6C8;
+  --chart-1: #53D8F8;
+  --chart-2: #18C6C8;
+  --chart-3: #7DDCFF;
   --chart-4: #F59E0B;
   --chart-5: #EF4444;
-  --sidebar: #02131B;
+  --sidebar: #030B12;
   --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #EFEC07;
-  --sidebar-primary-foreground: #02131B;
-  --sidebar-accent: #17394B;
+  --sidebar-primary: #53D8F8;
+  --sidebar-primary-foreground: #030B12;
+  --sidebar-accent: #0D2432;
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #1E4A5E;
-  --sidebar-ring: #EFEC07;
+  --sidebar-border: #1E4557;
+  --sidebar-ring: #53D8F8;
 }
 
+/* ── TAILWIND V4 THEME MAPPING ─────────────────────────────────────────────── */
 @theme inline {
   --font-sans: "DM Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
@@ -119,21 +122,23 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ── BASE ─────────────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-    /* Smooth theme switch - scoped to body so framer-motion animations aren't affected */
+    /* Smooth theme switch */
     transition: background-color 250ms ease, color 250ms ease;
   }
-  /* Propagate smooth bg/border/text transitions to all layout containers */
+  /* Propagate smooth transitions to layout containers */
   header, main, aside, footer, section, nav, article, div {
     transition: background-color 250ms ease, border-color 250ms ease, color 250ms ease;
   }
 }
 
+/* ── UTILITIES ────────────────────────────────────────────────────────────── */
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
