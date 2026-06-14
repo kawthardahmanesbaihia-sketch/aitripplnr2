@@ -48,6 +48,16 @@ interface SupplyRow extends RowDataPacket {
   package_count: number | bigint
 }
 
+interface MarketDemandRow extends RowDataPacket {
+  package_destination: string
+  total_requests:      number | bigint
+}
+
+interface MarketSupplyRow extends RowDataPacket {
+  destination:   string
+  package_count: number | bigint
+}
+
 // GET /api/analytics/bookings
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
@@ -67,6 +77,8 @@ export async function GET(req: NextRequest) {
     [trendRows],
     [convRows],
     [supplyRows],
+    [marketDemandRows],
+    [marketSupplyRows],
   ] = await Promise.all([
 
     // A. KPI summary
@@ -155,6 +167,26 @@ export async function GET(req: NextRequest) {
       [uid]
     ),
 
+    // G. Market Demand — booking requests across all agencies, platform-wide
+    db.query<MarketDemandRow[]>(
+      `SELECT package_destination, COUNT(*) AS total_requests
+       FROM package_booking_requests
+       GROUP BY package_destination
+       ORDER BY total_requests DESC
+       LIMIT 10`,
+      []
+    ),
+
+    // H. Market Supply — active/featured packages across all agencies, platform-wide
+    db.query<MarketSupplyRow[]>(
+      `SELECT destination, COUNT(*) AS package_count
+       FROM packages
+       WHERE status IN ('active', 'featured')
+       GROUP BY destination
+       ORDER BY package_count DESC`,
+      []
+    ),
+
   ])
 
   const kpi = kpiRows[0] ?? { total: 0, accepted: 0, pending: 0, declined: 0, unique_travelers: 0 }
@@ -200,6 +232,14 @@ export async function GET(req: NextRequest) {
       acceptance_rate: Number(r.acceptance_rate),
     })),
     supply: (supplyRows as SupplyRow[]).map(r => ({
+      destination:   r.destination,
+      package_count: Number(r.package_count),
+    })),
+    marketDemand: (marketDemandRows as MarketDemandRow[]).map(r => ({
+      destination:    r.package_destination,
+      total_requests: Number(r.total_requests),
+    })),
+    marketSupply: (marketSupplyRows as MarketSupplyRow[]).map(r => ({
       destination:   r.destination,
       package_count: Number(r.package_count),
     })),

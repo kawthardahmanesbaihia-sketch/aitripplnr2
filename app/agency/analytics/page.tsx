@@ -50,6 +50,14 @@ interface AnalyticsData {
     destination:   string
     package_count: number
   }>
+  marketDemand: Array<{
+    destination:    string
+    total_requests: number
+  }>
+  marketSupply: Array<{
+    destination:   string
+    package_count: number
+  }>
 }
 
 // Constants
@@ -194,7 +202,7 @@ function EmptyState() {
 
 // Analytics content
 function AnalyticsContent({ data }: { data: AnalyticsData }) {
-  const { kpi, topPackages, topDestinations, trend, conversion, supply } = data
+  const { kpi, topPackages, topDestinations, trend, conversion, supply, marketDemand, marketSupply } = data
 
   const trendData = useMemo(() => buildTrend(trend), [trend])
 
@@ -226,6 +234,29 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
   const opportunities = useMemo(
     () => demandSupplyData.filter(d => d.Demand > 0 && d.Supply === 0),
     [demandSupplyData]
+  )
+
+  const marketDemandSupplyData = useMemo(() => {
+    const supplyMap = new Map(marketSupply.map(s => [s.destination, s.package_count]))
+    return marketDemand.map(d => ({
+      name:   truncate(d.destination, 20),
+      Demand: d.total_requests,
+      Supply: supplyMap.get(d.destination) ?? 0,
+    }))
+  }, [marketDemand, marketSupply])
+
+  const marketOpportunities = useMemo(
+    () => marketDemandSupplyData.filter(d => d.Demand > 0 && d.Supply === 0),
+    [marketDemandSupplyData]
+  )
+
+  const topOpportunityDestinations = useMemo(
+    () =>
+      [...marketDemandSupplyData]
+        .map(d => ({ ...d, score: d.Demand / Math.max(d.Supply, 1) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5),
+    [marketDemandSupplyData]
   )
 
   if (kpi.total === 0) return <EmptyState />
@@ -375,6 +406,104 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
               </div>
             </div>
           )}
+        </SectionCard>
+      )}
+
+      {/* Market Insights — platform-wide demand vs supply across all agencies */}
+      {marketDemandSupplyData.length > 0 && (
+        <SectionCard
+          icon={TrendingUp}
+          title="Market Insights"
+          subtitle="Platform-wide booking demand vs available packages across all agencies"
+          delay={0.64}
+        >
+          <ResponsiveContainer width="100%" height={Math.max(160, marketDemandSupplyData.length * 44)}>
+            <BarChart
+              data={marketDemandSupplyData}
+              layout="vertical"
+              margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+              <XAxis type="number" tick={AXIS_TICK} tickLine={false} axisLine={false} allowDecimals={false} />
+              <YAxis type="category" dataKey="name" tick={AXIS_TICK} tickLine={false} axisLine={false} width={90} />
+              <Tooltip {...TIP_STYLE} />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+              <Bar dataKey="Demand" fill={COLORS[3]} radius={[0, 4, 4, 0]} maxBarSize={16} />
+              <Bar dataKey="Supply" fill={COLORS[4]} radius={[0, 4, 4, 0]} maxBarSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+
+          {marketOpportunities.length > 0 && (
+            <div className="mt-5 pt-5 border-t border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Market Opportunities — Platform demand with no packages available
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {marketOpportunities.map(o => (
+                  <span
+                    key={o.name}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary px-3 py-1 text-xs font-medium"
+                  >
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    {o.name}
+                    <span className="ml-1 opacity-70">
+                      · {o.Demand} request{o.Demand !== 1 ? "s" : ""}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+      )}
+
+      {/* Top Opportunity Destinations */}
+      {topOpportunityDestinations.length > 0 && (
+        <SectionCard
+          icon={TrendingUp}
+          title="Top Opportunity Destinations"
+          subtitle="Platform destinations with the highest demand-to-supply ratio (top 5)"
+          delay={0.70}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination</th>
+                  <th className="text-right pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-20">Demand</th>
+                  <th className="text-right pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-20">Supply</th>
+                  <th className="text-right pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-28">Score</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {topOpportunityDestinations.map(d => (
+                  <tr key={d.name}>
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="font-medium leading-snug">{d.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-right tabular-nums text-muted-foreground">{d.Demand}</td>
+                    <td className="py-3 text-right tabular-nums text-muted-foreground">{d.Supply}</td>
+                    <td className="py-3 text-right tabular-nums font-semibold">
+                      <span
+                        className={
+                          d.score >= 5
+                            ? "text-red-500"
+                            : d.score >= 2
+                            ? "text-amber-600"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {d.score.toFixed(1)}×
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </SectionCard>
       )}
 
