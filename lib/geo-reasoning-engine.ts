@@ -18,8 +18,7 @@
 
 import type { LabelScore } from "./clip-service"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 export interface ReasoningDebug {
   detectedSignals:  string[]
   landmarkMatches:  string[]
@@ -51,13 +50,13 @@ interface EnvironmentRule {
   reduceMultiplier: number
 }
 
-// ── Landmark Registry ─────────────────────────────────────────────────────────
+// Landmark Registry
 // These are high-confidence, exclusive landmark signals.
 // When a landmark phrase appears in the top-15 CLIP results, it overrides
 // the generic scoring and forces the matched destination to dominate.
 
 const LANDMARK_RULES: LandmarkRule[] = [
-  // ── Japan ──────────────────────────────────────────────────────────────────
+  // Japan
   {
     name: "Mount Fuji",
     keywords: ["mount fuji", "fuji mountain", "fuji snow peak", "fujisan"],
@@ -82,7 +81,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.35,
     exclusive: true,
   },
-  // ── France ─────────────────────────────────────────────────────────────────
+  // France
   {
     name: "Eiffel Tower",
     keywords: ["eiffel tower", "eiffel"],
@@ -99,7 +98,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.35,
     exclusive: true,
   },
-  // ── Jordan ─────────────────────────────────────────────────────────────────
+  // Jordan
   {
     name: "Petra",
     keywords: ["petra treasury", "petra al khazneh", "petra jordan", "al khazneh", "petra siq"],
@@ -116,7 +115,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Greece ─────────────────────────────────────────────────────────────────
+  // Greece
   {
     name: "Santorini",
     keywords: ["santorini", "oia santorini", "santorini blue dome", "caldera santorini"],
@@ -133,7 +132,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Italy ──────────────────────────────────────────────────────────────────
+  // Italy
   {
     name: "Colosseum",
     keywords: ["colosseum", "coliseum rome"],
@@ -158,7 +157,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.35,
     exclusive: true,
   },
-  // ── Iceland ────────────────────────────────────────────────────────────────
+  // Iceland
   {
     name: "Black Sand Beach Iceland",
     keywords: ["reynisfjara", "black sand beach iceland", "basalt columns iceland"],
@@ -183,7 +182,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Norway ─────────────────────────────────────────────────────────────────
+  // Norway
   {
     name: "Norwegian Fjords",
     keywords: ["geirangerfjord", "nærøyfjord", "sognefjord", "fjord norway", "norwegian fjord"],
@@ -208,7 +207,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Switzerland ────────────────────────────────────────────────────────────
+  // Switzerland
   {
     name: "Matterhorn",
     keywords: ["matterhorn", "zermatt matterhorn"],
@@ -225,7 +224,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Morocco ────────────────────────────────────────────────────────────────
+  // Morocco
   {
     name: "Sahara Desert Morocco",
     keywords: ["sahara desert", "sahara dunes", "sahara morocco", "erg chebbi", "merzouga"],
@@ -242,7 +241,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── India ──────────────────────────────────────────────────────────────────
+  // India
   {
     name: "Taj Mahal",
     keywords: ["taj mahal", "taj mahal agra"],
@@ -251,7 +250,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Thailand ───────────────────────────────────────────────────────────────
+  // Thailand
   {
     name: "Thai Temples",
     keywords: ["wat arun", "grand palace bangkok", "thai buddhist temple ornate gold"],
@@ -268,7 +267,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.35,
     exclusive: true,
   },
-  // ── Kenya / Tanzania ───────────────────────────────────────────────────────
+  // Kenya / Tanzania
   {
     name: "Maasai Mara Migration",
     keywords: ["maasai mara", "wildebeest migration kenya", "wildebeest crossing river"],
@@ -293,7 +292,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Dubai ──────────────────────────────────────────────────────────────────
+  // Dubai
   {
     name: "Burj Khalifa / Dubai Skyline",
     keywords: ["burj khalifa", "burj al arab", "palm jumeirah", "dubai marina"],
@@ -302,7 +301,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Maldives / Seychelles ──────────────────────────────────────────────────
+  // Maldives / Seychelles
   {
     name: "Overwater Bungalow",
     keywords: ["overwater bungalow", "water villa", "overwater villa"],
@@ -311,7 +310,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: false,
   },
-  // ── Peru ───────────────────────────────────────────────────────────────────
+  // Peru
   {
     name: "Machu Picchu",
     keywords: ["machu picchu", "machu picchu inca", "inca ruins peru"],
@@ -320,7 +319,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Australia ──────────────────────────────────────────────────────────────
+  // Australia
   {
     name: "Sydney Opera House",
     keywords: ["sydney opera house", "sydney harbour bridge"],
@@ -345,7 +344,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Turkey ─────────────────────────────────────────────────────────────────
+  // Turkey
   {
     name: "Cappadocia Balloons",
     keywords: ["cappadocia", "hot air balloon cappadocia", "cappadocia balloon"],
@@ -362,7 +361,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Egypt ──────────────────────────────────────────────────────────────────
+  // Egypt
   {
     name: "Pyramids of Giza",
     keywords: ["pyramid giza", "pyramids giza", "great pyramid", "sphinx egypt", "giza pyramid"],
@@ -371,7 +370,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── New Zealand ────────────────────────────────────────────────────────────
+  // New Zealand
   {
     name: "Milford Sound / Fjords NZ",
     keywords: ["milford sound", "fiordland new zealand"],
@@ -380,7 +379,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Vietnam ────────────────────────────────────────────────────────────────
+  // Vietnam
   {
     name: "Ha Long Bay",
     keywords: ["ha long bay", "halong bay", "ha long limestone"],
@@ -389,7 +388,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Spain ──────────────────────────────────────────────────────────────────
+  // Spain
   {
     name: "Sagrada Familia",
     keywords: ["sagrada familia", "sagrada família", "gaudi barcelona"],
@@ -398,7 +397,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── South Korea ────────────────────────────────────────────────────────────
+  // South Korea
   {
     name: "Seoul Landmark",
     keywords: ["gyeongbokgung", "bukchon hanok", "n seoul tower", "gyeongbok palace"],
@@ -407,7 +406,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Singapore ──────────────────────────────────────────────────────────────
+  // Singapore
   {
     name: "Marina Bay Sands / Gardens",
     keywords: ["marina bay sands", "gardens by the bay", "supertree singapore", "marina bay singapore"],
@@ -416,7 +415,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Mexico ─────────────────────────────────────────────────────────────────
+  // Mexico
   {
     name: "Chichen Itza",
     keywords: ["chichen itza", "chichén itzá", "mayan pyramid mexico"],
@@ -425,7 +424,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Croatia ────────────────────────────────────────────────────────────────
+  // Croatia
   {
     name: "Dubrovnik",
     keywords: ["dubrovnik", "dubrovnik old town", "dubrovnik walls"],
@@ -434,7 +433,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Nepal ──────────────────────────────────────────────────────────────────
+  // Nepal
   {
     name: "Mount Everest",
     keywords: ["mount everest", "everest base camp", "everest nepal", "sagarmatha"],
@@ -443,7 +442,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Namibia ────────────────────────────────────────────────────────────────
+  // Namibia
   {
     name: "Sossusvlei",
     keywords: ["sossusvlei", "deadvlei", "namib desert dunes", "namib sossusvlei"],
@@ -452,7 +451,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Cambodia ───────────────────────────────────────────────────────────────
+  // Cambodia
   {
     name: "Angkor Wat",
     keywords: ["angkor wat", "angkor temple", "angkor siem reap", "bayon temple face", "ta prohm jungle", "khmer temple"],
@@ -461,7 +460,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Czech Republic ─────────────────────────────────────────────────────────
+  // Czech Republic
   {
     name: "Prague Old Town / Charles Bridge",
     keywords: ["charles bridge prague", "prague clock tower", "astronomical clock prague", "prague old town", "prague castle", "prague vltava"],
@@ -478,7 +477,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Brazil ─────────────────────────────────────────────────────────────────
+  // Brazil
   {
     name: "Christ the Redeemer",
     keywords: ["christ the redeemer", "cristo redentor", "rio de janeiro statue", "corcovado"],
@@ -495,7 +494,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: false,
   },
-  // ── Sri Lanka ──────────────────────────────────────────────────────────────
+  // Sri Lanka
   {
     name: "Sigiriya",
     keywords: ["sigiriya", "lion rock sri lanka", "sigiriya rock fortress"],
@@ -512,7 +511,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Philippines ────────────────────────────────────────────────────────────
+  // Philippines
   {
     name: "El Nido Palawan",
     keywords: ["el nido palawan", "el nido", "palawan lagoon", "palawan limestone karst"],
@@ -529,7 +528,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Georgia (country) ──────────────────────────────────────────────────────
+  // Georgia (country)
   {
     name: "Gergeti Trinity Church",
     keywords: ["gergeti trinity church", "kazbegi church", "stepantsminda church", "kazbegi georgia"],
@@ -538,7 +537,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Malaysia ───────────────────────────────────────────────────────────────
+  // Malaysia
   {
     name: "Petronas Towers",
     keywords: ["petronas towers", "petronas twin towers", "klcc towers", "kuala lumpur twin towers"],
@@ -555,7 +554,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Austria ────────────────────────────────────────────────────────────────
+  // Austria
   {
     name: "Hallstatt",
     keywords: ["hallstatt", "hallstatt lake austria", "hallstatt village reflection"],
@@ -572,7 +571,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Ireland ────────────────────────────────────────────────────────────────
+  // Ireland
   {
     name: "Cliffs of Moher",
     keywords: ["cliffs of moher", "moher cliffs ireland", "ireland ocean cliffs dramatic"],
@@ -589,7 +588,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Colombia ───────────────────────────────────────────────────────────────
+  // Colombia
   {
     name: "Cartagena Walled City",
     keywords: ["cartagena walled city", "cartagena colombia colonial", "cartagena old town"],
@@ -607,7 +606,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     exclusive: true,
   },
 
-  // ── Denmark ────────────────────────────────────────────────────────────────
+  // Denmark
   {
     name: "Nyhavn Copenhagen",
     keywords: ["nyhavn", "nyhavn copenhagen canal", "copenhagen colourful canal house"],
@@ -616,7 +615,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Belgium ────────────────────────────────────────────────────────────────
+  // Belgium
   {
     name: "Grand Place Brussels",
     keywords: ["grand place brussels", "grand place belgium", "brussels guild hall"],
@@ -633,7 +632,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Germany ────────────────────────────────────────────────────────────────
+  // Germany
   {
     name: "Neuschwanstein Castle",
     keywords: ["neuschwanstein", "neuschwanstein castle bavaria"],
@@ -658,7 +657,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Hungary ────────────────────────────────────────────────────────────────
+  // Hungary
   {
     name: "Budapest Parliament",
     keywords: ["budapest parliament", "parliament danube budapest", "budapest parliament night"],
@@ -675,7 +674,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Poland ─────────────────────────────────────────────────────────────────
+  // Poland
   {
     name: "Wieliczka Salt Mine",
     keywords: ["wieliczka", "wieliczka salt mine", "underground chamber crystal poland"],
@@ -692,7 +691,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── United Kingdom ─────────────────────────────────────────────────────────
+  // United Kingdom
   {
     name: "Big Ben / Westminster",
     keywords: ["big ben", "westminster palace london", "tower of london", "tower bridge thames"],
@@ -709,7 +708,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Scotland ───────────────────────────────────────────────────────────────
+  // Scotland
   {
     name: "Edinburgh Castle",
     keywords: ["edinburgh castle", "edinburgh castle rock scotland", "edinburgh skyline"],
@@ -734,7 +733,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Saudi Arabia ───────────────────────────────────────────────────────────
+  // Saudi Arabia
   {
     name: "AlUla / Hegra",
     keywords: ["alula", "al-ula", "hegra", "madain saleh", "nabataean tomb saudi"],
@@ -751,7 +750,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Qatar ──────────────────────────────────────────────────────────────────
+  // Qatar
   {
     name: "Museum of Islamic Art Doha",
     keywords: ["museum islamic art doha", "doha museum waterfront", "qatar national museum"],
@@ -760,7 +759,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Oman ───────────────────────────────────────────────────────────────────
+  // Oman
   {
     name: "Sultan Qaboos Grand Mosque",
     keywords: ["sultan qaboos mosque", "grand mosque muscat", "muscat grand mosque oman"],
@@ -777,7 +776,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Lebanon ────────────────────────────────────────────────────────────────
+  // Lebanon
   {
     name: "Baalbek",
     keywords: ["baalbek", "baalbek roman temple", "baalbek jupiter column"],
@@ -786,7 +785,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Madagascar ─────────────────────────────────────────────────────────────
+  // Madagascar
   {
     name: "Avenue des Baobabs",
     keywords: ["avenue des baobabs", "baobab alley madagascar", "baobab tree madagascar sunset"],
@@ -803,7 +802,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Mauritius ──────────────────────────────────────────────────────────────
+  // Mauritius
   {
     name: "Chamarel Coloured Earth",
     keywords: ["chamarel", "chamarel coloured earth", "chamarel seven colours"],
@@ -820,7 +819,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── China ──────────────────────────────────────────────────────────────────
+  // China
   {
     name: "Great Wall of China",
     keywords: ["great wall of china", "great wall china", "great wall mountain ridge"],
@@ -853,7 +852,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Bhutan ─────────────────────────────────────────────────────────────────
+  // Bhutan
   {
     name: "Tiger's Nest / Paro Taktsang",
     keywords: ["tiger's nest", "paro taktsang", "tiger nest bhutan", "taktsang cliff monastery bhutan"],
@@ -862,7 +861,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.1,
     exclusive: true,
   },
-  // ── United States ──────────────────────────────────────────────────────────
+  // United States
   {
     name: "Grand Canyon",
     keywords: ["grand canyon", "grand canyon arizona", "grand canyon red rock vast"],
@@ -903,7 +902,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Alaska ─────────────────────────────────────────────────────────────────
+  // Alaska
   {
     name: "Denali",
     keywords: ["denali", "denali alaska", "mount mckinley alaska", "denali mountain reflection"],
@@ -912,7 +911,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Argentina ──────────────────────────────────────────────────────────────
+  // Argentina
   {
     name: "Perito Moreno Glacier",
     keywords: ["perito moreno", "perito moreno glacier", "patagonia argentina glacier calving"],
@@ -921,7 +920,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Chile ──────────────────────────────────────────────────────────────────
+  // Chile
   {
     name: "Torres del Paine",
     keywords: ["torres del paine", "torres paine granite", "patagonia granite towers chile"],
@@ -946,7 +945,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: false,
   },
-  // ── Hawaii ─────────────────────────────────────────────────────────────────
+  // Hawaii
   {
     name: "Napali Coast",
     keywords: ["napali coast", "kauai napali cliff", "napali coast hawaii"],
@@ -963,7 +962,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Greenland ──────────────────────────────────────────────────────────────
+  // Greenland
   {
     name: "Ilulissat Icefjord",
     keywords: ["ilulissat", "ilulissat icefjord", "greenland icefjord", "disko bay greenland"],
@@ -972,7 +971,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Mongolia ───────────────────────────────────────────────────────────────
+  // Mongolia
   {
     name: "Eagle Hunter / Ger Tent",
     keywords: ["eagle hunter mongolia", "mongolian eagle hunter", "gobi desert ger tent", "mongolian nomad ger"],
@@ -981,7 +980,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Armenia ────────────────────────────────────────────────────────────────
+  // Armenia
   {
     name: "Khor Virap / Mount Ararat",
     keywords: ["khor virap", "mount ararat armenia", "ararat monastery armenia"],
@@ -998,7 +997,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Uzbekistan ─────────────────────────────────────────────────────────────
+  // Uzbekistan
   {
     name: "Registan Samarkand",
     keywords: ["registan", "samarkand registan", "registan blue tile madrasah"],
@@ -1007,7 +1006,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Romania ────────────────────────────────────────────────────────────────
+  // Romania
   {
     name: "Peles Castle",
     keywords: ["peles castle", "peles sinaia romania"],
@@ -1024,7 +1023,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Bulgaria ───────────────────────────────────────────────────────────────
+  // Bulgaria
   {
     name: "Rila Monastery",
     keywords: ["rila monastery", "rila monastery bulgaria", "rila monastery fresco courtyard"],
@@ -1033,7 +1032,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Slovenia ───────────────────────────────────────────────────────────────
+  // Slovenia
   {
     name: "Lake Bled Island Church",
     keywords: ["lake bled", "bled island church", "lake bled slovenia reflection"],
@@ -1042,7 +1041,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Estonia ────────────────────────────────────────────────────────────────
+  // Estonia
   {
     name: "Tallinn Old Town",
     keywords: ["tallinn old town", "tallinn medieval tower", "tallinn town hall"],
@@ -1051,7 +1050,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Latvia ─────────────────────────────────────────────────────────────────
+  // Latvia
   {
     name: "Riga Art Nouveau",
     keywords: ["riga art nouveau", "riga art nouveau facade"],
@@ -1060,7 +1059,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Lithuania ──────────────────────────────────────────────────────────────
+  // Lithuania
   {
     name: "Hill of Crosses",
     keywords: ["hill of crosses", "kryžių kalnas", "thousands iron crosses lithuania"],
@@ -1077,7 +1076,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.3,
     exclusive: true,
   },
-  // ── Tunisia ────────────────────────────────────────────────────────────────
+  // Tunisia
   {
     name: "Sidi Bou Said",
     keywords: ["sidi bou said", "sidi bou said blue white"],
@@ -1094,7 +1093,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.25,
     exclusive: true,
   },
-  // ── Algeria ────────────────────────────────────────────────────────────────
+  // Algeria
   {
     name: "Tassili n'Ajjer",
     keywords: ["tassili", "tassili n'ajjer", "tassili rock art algeria"],
@@ -1103,7 +1102,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Rwanda ─────────────────────────────────────────────────────────────────
+  // Rwanda
   {
     name: "Mountain Gorilla Rwanda",
     keywords: ["mountain gorilla", "gorilla trekking", "gorilla rwanda", "silverback gorilla trekking"],
@@ -1112,7 +1111,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.1,
     exclusive: true,
   },
-  // ── Ethiopia ───────────────────────────────────────────────────────────────
+  // Ethiopia
   {
     name: "Lalibela Rock Churches",
     keywords: ["lalibela", "lalibela rock church", "lalibela hewn church ethiopia"],
@@ -1129,7 +1128,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.1,
     exclusive: true,
   },
-  // ── Zimbabwe ───────────────────────────────────────────────────────────────
+  // Zimbabwe
   {
     name: "Victoria Falls Zimbabwe",
     keywords: ["victoria falls zimbabwe", "victoria falls spray mist zimbabwe", "zimbabwe falls bridge"],
@@ -1138,7 +1137,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: false,
   },
-  // ── Zambia ─────────────────────────────────────────────────────────────────
+  // Zambia
   {
     name: "Victoria Falls Zambia / Devil's Pool",
     keywords: ["victoria falls zambia", "devil's pool zambia", "zambia victoria falls"],
@@ -1147,7 +1146,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: false,
   },
-  // ── Panama ─────────────────────────────────────────────────────────────────
+  // Panama
   {
     name: "Panama Canal",
     keywords: ["panama canal", "panama canal locks", "canal locks ship panama"],
@@ -1156,7 +1155,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Ecuador ────────────────────────────────────────────────────────────────
+  // Ecuador
   {
     name: "Galápagos Islands",
     keywords: ["galápagos", "galapagos islands", "galapagos tortoise darwin", "galapagos marine iguana"],
@@ -1165,7 +1164,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.1,
     exclusive: true,
   },
-  // ── Bolivia ────────────────────────────────────────────────────────────────
+  // Bolivia
   {
     name: "Salar de Uyuni",
     keywords: ["salar de uyuni", "uyuni salt flat", "uyuni mirror bolivia", "bolivian salt flat"],
@@ -1174,7 +1173,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.1,
     exclusive: true,
   },
-  // ── Guatemala ──────────────────────────────────────────────────────────────
+  // Guatemala
   {
     name: "Tikal",
     keywords: ["tikal", "tikal mayan temple", "tikal jungle pyramid guatemala"],
@@ -1183,7 +1182,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.15,
     exclusive: true,
   },
-  // ── Laos ───────────────────────────────────────────────────────────────────
+  // Laos
   {
     name: "Luang Prabang Alms Giving",
     keywords: ["luang prabang monk alms", "monk alms orange laos", "luang prabang dawn monks"],
@@ -1192,7 +1191,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
     othersMultiplier: 0.2,
     exclusive: true,
   },
-  // ── Hong Kong ──────────────────────────────────────────────────────────────
+  // Hong Kong
   {
     name: "Hong Kong Neon Skyline",
     keywords: ["hong kong skyline", "victoria harbour hong kong", "hong kong neon harbour"],
@@ -1211,7 +1210,7 @@ const LANDMARK_RULES: LandmarkRule[] = [
   },
 ]
 
-// ── Environment Signal Rules ───────────────────────────────────────────────────
+// Environment Signal Rules
 // Triggered when environment keywords appear in the top CLIP phrases.
 // Applied AFTER landmark detection to handle non-landmark environmental images.
 
@@ -1321,8 +1320,7 @@ const ENVIRONMENT_RULES: EnvironmentRule[] = [
     reduceMultiplier: 0.4,
   },
 
-  // ── New disambiguation rules ──────────────────────────────────────────────
-
+  // New disambiguation rules
   {
     name: "futuristic_neon_megacity",
     keywords: [
@@ -1485,7 +1483,7 @@ const ENVIRONMENT_RULES: EnvironmentRule[] = [
   },
 ]
 
-// ── Precompiled keyword indices (built once at module load) ───────────────────
+// Precompiled keyword indices (built once at module load)
 // Avoids repeated .toLowerCase() calls on every rule/keyword during hot path.
 
 interface _CompiledKw { lower: string; ruleIdx: number }
@@ -1504,14 +1502,12 @@ for (let i = 0; i < ENVIRONMENT_RULES.length; i++) {
   }
 }
 
-// ── Detection Helpers ─────────────────────────────────────────────────────────
-
+// Detection Helpers
 function topN(labelScores: LabelScore[], n: number): LabelScore[] {
   return labelScores.slice(0, n)
 }
 
-// ── Core Reasoning Function ────────────────────────────────────────────────────
-
+// Core Reasoning Function
 /**
  * Apply geographic reasoning to per-destination base scores.
  *
@@ -1539,7 +1535,7 @@ export function applyGeographicReasoning(
   const top15 = topN(labelScores, 15)
   const top30 = topN(labelScores, 30)
 
-  // ── Step 1: Landmark Detection (precompiled index) ─────────────────────────
+  // Step 1: Landmark Detection (precompiled index)
   // Scan top-15 labels once; for each label check all precompiled keywords.
   // Avoids O(rules × labels × keywords) repeated toLowerCase() calls.
 
@@ -1579,7 +1575,7 @@ export function applyGeographicReasoning(
 
   }
 
-  // ── Step 2: Environment Signal Detection (precompiled index) ──────────────
+  // Step 2: Environment Signal Detection (precompiled index)
   // Scan top-30 labels once against precompiled env keywords.
 
   const _triggeredEnv = new Map<number, LabelScore>()
@@ -1617,7 +1613,7 @@ export function applyGeographicReasoning(
     }
   }
 
-  // ── Step 3: Contradiction Protection ─────────────────────────────────────
+  // Step 3: Contradiction Protection
   // If both cold AND tropical signals detected (e.g. "tropical beach in Iceland"),
   // reduce the confidence on both and trust the landmark rules more.
   const hasCold    = debug.detectedSignals.includes("arctic_cold") || debug.detectedSignals.includes("alpine_mountain_snow")
@@ -1684,7 +1680,7 @@ export function logReasoningDebug(results: ReasoningResult[], imageCount: number
 
   for (let i = 0; i < results.length; i++) {
     const d = results[i].debug
-    console.log(`\n─── Image ${i + 1} ───────────────────────────────────────`)
+    console.log(`\n--- Image ${i + 1} ---`)
 
     if (d.landmarkMatches.length > 0) {
       console.log(`  Landmark Matches:`)
@@ -1730,7 +1726,7 @@ export function logReasoningDebug(results: ReasoningResult[], imageCount: number
   console.log(`${"═".repeat(60)}\n`)
 }
 
-// ── Semantic Category Consistency Check ───────────────────────────────────────
+// Semantic Category Consistency Check
 // Called by clip-scorer after category-weighted scoring to log which
 // semantic categories are most relevant across all images.
 

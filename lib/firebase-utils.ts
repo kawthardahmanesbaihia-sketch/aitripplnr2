@@ -8,8 +8,7 @@ import {
 } from 'firebase/firestore';
 import { firestore, isFirebaseInitialized } from './firebase-config';
 
-// ─── Data interfaces ────────────────────────────────────────────────────────
-
+// Data interfaces
 export interface FirebaseSession {
   sessionId: string;
   createdAt: number;
@@ -63,8 +62,7 @@ export interface SharedPreferences {
   [key: string]: any;
 }
 
-// ─── ID generators ──────────────────────────────────────────────────────────
-
+// ID generators
 export function generateSessionId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let id = '';
@@ -78,8 +76,7 @@ export function generateUserId(): string {
   return 'user_' + Math.random().toString(36).substring(2, 11);
 }
 
-// ─── Session CRUD ────────────────────────────────────────────────────────────
-
+// Session CRUD
 export async function createSession(
   hostUsername: string,
   groupSize?: number,

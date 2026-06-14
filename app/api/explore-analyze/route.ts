@@ -27,7 +27,7 @@ export const runtime = "nodejs"
 prewarm()
 prewarmTextEmbeddings().catch(() => {})
 
-// ── Destination ID → ISO 2-letter code ───────────────────────────────────────
+// Destination ID → ISO 2-letter code
 // Must stay in sync with the same map in /api/analyze/route.ts
 const DEST_TO_ISO: Record<string, string> = {
   japan: "JP", france: "FR", thailand: "TH", italy: "IT",
@@ -62,8 +62,7 @@ function priceToStyle(priceLevel: string): "budget" | "mid-range" | "luxury" {
   return "budget"
 }
 
-// ── Route handler ─────────────────────────────────────────────────────────────
-
+// Route handler
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
   if (!checkRateLimit(ip).allowed) return rateLimitResponse()
@@ -100,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     const topDestinations = ranked.slice(0, 3)
 
-    // ── Build countries[] — identical structure to /api/analyze ──────────────
+    // Build countries[] — identical structure to /api/analyze
     const countries = topDestinations.map((dest, index) => {
       const exploreDest = EXPLORE_DESTINATIONS[dest.id]
       const travelEntry = DESTINATIONS.find(d => d.id === dest.id)

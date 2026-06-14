@@ -16,8 +16,7 @@ import { PreferenceProfile } from "./preferences-analyzer"
 import { scoreBudgetCompatibility, getDestinationBudgetLabel, getDailyCostEstimate } from "./budget-matcher"
 import { scoreSeasonCompatibility, getBestTimeToVisit, getSeasonHighlight } from "./season-matcher"
 
-// ─── Public types ─────────────────────────────────────────────────────────────
-
+// Public types
 export interface CityRecommendation {
   city: string
   why: string
@@ -59,14 +58,14 @@ export interface HotelSuggestion {
   activity_level: string
 }
 
-// ─── Scoring weights ──────────────────────────────────────────────────────────
+// Scoring weights
 // Visual preference match weight within the visualMatch sub-score
 const V = { ACTIVITY: 0.40, CLIMATE: 0.30, MOOD: 0.20, FOOD: 0.10 }
 
 // Top-level three-factor weights
 const W = { VISUAL: 0.40, BUDGET: 0.30, SEASON: 0.30 }
 
-// ─── Country profiles ─────────────────────────────────────────────────────────
+// Country profiles
 // 24 destinations covering all major travel segments.
 // Each profile defines the destination's characteristics — matching happens
 // by comparing the user's extracted preferences against these arrays.
@@ -84,7 +83,7 @@ interface CountryProfile {
 }
 
 const COUNTRY_PROFILES: Record<string, CountryProfile> = {
-  // ── Americas ────────────────────────────────────────────────────────────────
+  // Americas
   US: {
     name: "United States",
     climate: "varied",
@@ -158,7 +157,7 @@ const COUNTRY_PROFILES: Record<string, CountryProfile> = {
     ],
   },
 
-  // ── Europe ──────────────────────────────────────────────────────────────────
+  // Europe
   FR: {
     name: "France",
     climate: "temperate",
@@ -286,7 +285,7 @@ const COUNTRY_PROFILES: Record<string, CountryProfile> = {
     ],
   },
 
-  // ── Asia ────────────────────────────────────────────────────────────────────
+  // Asia
   JP: {
     name: "Japan",
     climate: "temperate",
@@ -414,7 +413,7 @@ const COUNTRY_PROFILES: Record<string, CountryProfile> = {
     ],
   },
 
-  // ── Middle East & Africa ─────────────────────────────────────────────────────
+  // Middle East & Africa
   MA: {
     name: "Morocco",
     climate: "desert",
@@ -540,7 +539,7 @@ const COUNTRY_PROFILES: Record<string, CountryProfile> = {
   ],
 },
 
-  // ── Oceania ─────────────────────────────────────────────────────────────────
+  // Oceania
   AU: {
     name: "Australia",
     climate: "tropical",
@@ -579,8 +578,7 @@ const COUNTRY_PROFILES: Record<string, CountryProfile> = {
   },
 }
 
-// ─── City-level recommendations per country ───────────────────────────────────
-
+// City-level recommendations per country
 const CITY_PROFILES: Record<string, CityRecommendation[]> = {
   US: [
     { city: "New York",         why: "World-class culture, dining and nightlife",           bestFor: ["cultural", "nightlife", "food"],   budgetFit: "all" },
@@ -753,8 +751,7 @@ const CITY_PROFILES: Record<string, CityRecommendation[]> = {
   ],
 }
 
-// ─── City recommendation engine ───────────────────────────────────────────────
-
+// City recommendation engine
 export function getCityRecommendations(
   countryCode: string,
   profile: PreferenceProfile,
@@ -794,8 +791,7 @@ export function getCityRecommendations(
   return scored.slice(0, limit).map((s) => s.city)
 }
 
-// ─── Helper: score one preference dimension ───────────────────────────────────
-
+// Helper: score one preference dimension
 function scoreAspect(userPrefs: string[], countryOptions: string[]): number {
   if (userPrefs.length === 0 || countryOptions.length === 0) return 70
 
@@ -819,15 +815,13 @@ function scoreAspect(userPrefs: string[], countryOptions: string[]): number {
   return Math.min(95, Math.round(60 + pct * 0.35))
 }
 
-// ─── Context passed from the API route ───────────────────────────────────────
-
+// Context passed from the API route
 export interface MatchingContext {
   budget?:      string
   travelDates?: { start: string; end: string }
 }
 
-// ─── Core matching function ───────────────────────────────────────────────────
-
+// Core matching function
 function matchDestinations(
   profile:  PreferenceProfile,
   context?: MatchingContext
@@ -835,7 +829,7 @@ function matchDestinations(
   const matches: DestinationMatch[] = []
 
   for (const [code, cp] of Object.entries(COUNTRY_PROFILES)) {
-    // ── Visual match (image preference analysis) ──
+    // Visual match (image preference analysis)
     const activityScore = scoreAspect(
       [profile.activityLevel, ...profile.allTags],
       cp.activities
@@ -857,13 +851,13 @@ function matchDestinations(
       foodScore     * V.FOOD
     )
 
-    // ── Budget match ──────────────────────────────
+    // Budget match
     const budgetScore = scoreBudgetCompatibility(code, context?.budget)
 
-    // ── Season match ──────────────────────────────
+    // Season match
     const seasonScore = scoreSeasonCompatibility(code, context?.travelDates)
 
-    // ── Final weighted score ──────────────────────
+    // Final weighted score
     const confidenceScore = Math.round(
       Math.max(55, Math.min(97,
         visualMatch  * W.VISUAL +
@@ -872,7 +866,7 @@ function matchDestinations(
       ))
     )
 
-    // ── Positives & negatives ─────────────────────
+    // Positives & negatives
     const positives: string[] = []
     const negatives: string[] = []
 
@@ -940,8 +934,7 @@ function matchDestinations(
   return matches.sort((a, b) => b.confidenceScore - a.confidenceScore)
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
-
+// Public API
 /**
  * Get the top N destination matches for a user profile.
  * Accepts optional context (budget, travel dates) to power the

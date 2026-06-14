@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const login   = identifier.trim()
     const isEmail = login.includes("@")
 
-    // ── Find user by email OR username ────────────────────────────────────────
+    // Find user by email OR username
     const [rows] = await db.query<UserRow[]>(
       `SELECT id, username, email, password, role, full_name, avatar_url
        FROM users
@@ -50,16 +50,16 @@ export async function POST(req: NextRequest) {
 
     const found = rows[0]
 
-    // ── Verify password ───────────────────────────────────────────────────────
+    // Verify password
     const match = await bcrypt.compare(password, found.password)
     if (!match) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // ── Async: update last login timestamp ───────────────────────────────────
+    // Async: update last login timestamp
     db.query("UPDATE users SET last_login = NOW() WHERE id = ?", [found.id]).catch(() => {})
 
-    // ── Sign JWT + attach as HttpOnly cookie ─────────────────────────────────
+    // Sign JWT + attach as HttpOnly cookie
     const token = await signToken({
       userId: found.id,
       role:   found.role,

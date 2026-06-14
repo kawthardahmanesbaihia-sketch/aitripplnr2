@@ -20,8 +20,7 @@ interface UserRow extends RowDataPacket {
   created_at: string | null
 }
 
-// ── GET /api/profile ───────────────────────────────────────────────────────────
-
+// GET /api/profile
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth
@@ -54,8 +53,7 @@ export async function GET(req: NextRequest) {
   })
 }
 
-// ── PUT /api/profile ───────────────────────────────────────────────────────────
-
+// PUT /api/profile
 export async function PUT(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth

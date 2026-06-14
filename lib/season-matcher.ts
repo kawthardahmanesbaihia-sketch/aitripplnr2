@@ -20,7 +20,7 @@ interface DestinationSeason {
   highlights: Partial<Record<number, string>>
 }
 
-// ─── Season database ──────────────────────────────────────────────────────────
+// Season database
 // 24 countries, all used in destination-matcher.ts
 
 const DESTINATION_SEASONS: Record<string, DestinationSeason> = {
@@ -311,8 +311,7 @@ const DESTINATION_SEASONS: Record<string, DestinationSeason> = {
   },
 }
 
-// ─── Scoring function ─────────────────────────────────────────────────────────
-
+// Scoring function
 /**
  * Score season compatibility between a destination and user's travel dates.
  * Returns 0–100.

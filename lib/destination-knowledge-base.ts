@@ -8,7 +8,7 @@
  * The semantic structure drives category-weighted scoring in clip-scorer.ts.
  */
 
-// ── Semantic category weights ─────────────────────────────────────────────────
+// Semantic category weights
 // Higher weight = this category's CLIP score influences destination ranking more.
 
 export const CATEGORY_WEIGHTS: Record<string, number> = {
@@ -38,7 +38,7 @@ export const CATEGORY_WEIGHTS: Record<string, number> = {
   festival_celebration: 1.0,
 }
 
-// ── Contradiction pairs ────────────────────────────────────────────────────────
+// Contradiction pairs
 // If categoryA fires strongly, penalise destinations that are incompatible.
 export const CATEGORY_CONTRADICTIONS: Array<{
   dominant: string
@@ -67,8 +67,7 @@ export const CATEGORY_CONTRADICTIONS: Array<{
   },
 ]
 
-// ── Structured semantic destination profiles ──────────────────────────────────
-
+// Structured semantic destination profiles
 export const DEST_CATEGORY_CONCEPTS: Record<string, Record<string, string[]>> = {
 
   // ═══════════════════════════════ EAST ASIA ══════════════════════════════════
@@ -8437,14 +8436,11 @@ export const DEST_CATEGORY_CONCEPTS: Record<string, Record<string, string[]>> = 
     ],
   },
 
-} // ─── End Part 2 ──────────────────────────────────────────────────────────────
+} // End Part 2
 
-// ─────────────────────────────────────────────────────────────────────────────
-// The full export block is appended after all destinations are inserted.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── Flat array exports (built from structured data) ───────────────────────────
-
+// // The full export block is appended after all destinations are inserted.
+// ---
+// Flat array exports (built from structured data)
 export const ALL_CONCEPT_LABELS: string[] = []
 export const LABEL_TO_DEST: Record<string, string> = {}
 export const LABEL_TO_CATEGORY: Record<string, string> = {}

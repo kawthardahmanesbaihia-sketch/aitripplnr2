@@ -19,8 +19,7 @@ import { PackageCard } from "@/components/PackageCard"
 import { BookingModal } from "@/components/BookingModal"
 import type { Package } from "@/types/package"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface Destination {
   name: string
   code: string
@@ -73,8 +72,7 @@ interface DestinationApiData {
   dataSources:      Record<string, string>
 }
 
-// ── Utilities ─────────────────────────────────────────────────────────────────
-
+// Utilities
 const FALLBACK = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1600&q=80"
 
 function countryCodeToFlag(code: string): string {
@@ -116,8 +114,7 @@ function getActivityIcon(activity: string) {
   return Activity
 }
 
-// ── Static attractions database ───────────────────────────────────────────────
-
+// Static attractions database
 const CITY_ATTRACTIONS: Record<string, Array<{ name: string; description: string; emoji: string }>> = {
   Paris:      [{ name: "Eiffel Tower", description: "The iron lattice symbol of France standing 330m above the city", emoji: "🗼" }, { name: "Louvre Museum", description: "World's most visited museum, home to the Mona Lisa and 35,000 artworks", emoji: "🏛️" }, { name: "Sacré-Cœur & Montmartre", description: "Hilltop basilica in the bohemian artist district with sweeping city views", emoji: "⛪" }, { name: "Seine River Cruise", description: "Glide past Notre-Dame and illuminated Parisian monuments at dusk", emoji: "🚢" }],
   Tokyo:      [{ name: "Senso-ji Temple", description: "Tokyo's oldest Buddhist temple in historic Asakusa, founded in 645 AD", emoji: "⛩️" }, { name: "Shibuya Crossing", description: "The world's busiest pedestrian scramble — a defining Tokyo moment", emoji: "🚦" }, { name: "Shinjuku Gyoen", description: "Peaceful national garden blending French, English and Japanese landscapes", emoji: "🌸" }, { name: "teamLab Planets", description: "Mind-bending immersive digital art museum unlike anything else on earth", emoji: "🎨" }],
@@ -159,8 +156,7 @@ function getAttractions(city: string, activities?: string[]) {
     : [{ name: `${city} Old Town`, description: `Explore the historic heart of ${city}`, emoji: "🏛️" }]
 }
 
-// ── ScoreBar component ────────────────────────────────────────────────────────
-
+// ScoreBar component
 function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="space-y-1">
@@ -180,8 +176,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
   )
 }
 
-// ── Small loading spinner inline ──────────────────────────────────────────────
-
+// Small loading spinner inline
 function SectionLoader({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 py-8 justify-center text-muted-foreground">
@@ -191,35 +186,34 @@ function SectionLoader({ label }: { label: string }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
-
+// Main page
 export default function ResultsPage() {
   const { user } = useAuth()
   const track    = useTrackHistory()
   const historyTracked = useRef(false)
   const { packages: allPackages, isLoading: packagesLoading } = usePackages()
 
-  // ── Session data ────────────────────────────────────────────────────────────
+  // Session data
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [isLoading,   setIsLoading]   = useState(true)
 
-  // ── Multi-destination navigation ─────────────────────────────────────────────
+  // Multi-destination navigation
   const [activeDestIndex, setActiveDestIndex] = useState(0)
   const [slideDir, setSlideDir] = useState<1 | -1>(1)
 
-  // ── Booking modal ─────────────────────────────────────────────────────────────
+  // Booking modal
   const [bookingPkg, setBookingPkg] = useState<Package | null>(null)
 
-  // ── Per-destination gallery state ─────────────────────────────────────────────
+  // Per-destination gallery state
   const [destGalleries,   setDestGalleries]   = useState<Record<string, string[]>>({})
   const [galleryLoading,  setGalleryLoading]  = useState<Record<string, boolean>>({})
   const [activePhotos,    setActivePhotos]    = useState<Record<string, number>>({})
 
-  // ── Per-destination full API data ─────────────────────────────────────────────
+  // Per-destination full API data
   const [destDetails,  setDestDetails]  = useState<Record<string, DestinationApiData>>({})
   const [detailLoading, setDetailLoading] = useState<Record<string, boolean>>({})
 
-  // ── Track history once both session data and auth are ready ──────────────────
+  // Track history once both session data and auth are ready
   useEffect(() => {
     if (!user || !sessionData || historyTracked.current) return
     historyTracked.current = true
@@ -241,7 +235,7 @@ export default function ResultsPage() {
   const fetchedGalleries = useRef<Set<string>>(new Set())
   const fetchedDetails   = useRef<Set<string>>(new Set())
 
-  // ── Load sessionStorage on mount ─────────────────────────────────────────────
+  // Load sessionStorage on mount
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("analysisResults")
@@ -263,7 +257,7 @@ export default function ResultsPage() {
 
   const destinations = sessionData?.countries?.slice(0, 3) ?? []
 
-  // ── Filter packages for the currently active destination only ────────────────
+  // Filter packages for the currently active destination only
   // No tags, no scoring, no fallback. A package appears only when its country or
   // destination field matches the active card's country or city — nothing else.
   const matchedPackages = useMemo(() => {
@@ -297,7 +291,7 @@ export default function ResultsPage() {
     })
   }, [allPackages, activeDestIndex, destinations, packagesLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Lazy fetch gallery for a destination ──────────────────────────────────────
+  // Lazy fetch gallery for a destination
   const fetchGallery = useCallback(async (dest: Destination) => {
     const key = dest.name
     if (fetchedGalleries.current.has(key)) return
@@ -320,7 +314,7 @@ export default function ResultsPage() {
     }
   }, [])
 
-  // ── Lazy fetch full API data for a destination ────────────────────────────────
+  // Lazy fetch full API data for a destination
   const fetchDetails = useCallback(async (dest: Destination, sd: SessionData) => {
     const key = dest.name
     if (fetchedDetails.current.has(key)) return
@@ -365,7 +359,7 @@ export default function ResultsPage() {
     }
   }, [])
 
-  // ── Trigger fetches when active destination or session data changes ──────────
+  // Trigger fetches when active destination or session data changes
   useEffect(() => {
     if (!sessionData || !destinations.length) return
     const dest = destinations[activeDestIndex]
@@ -377,7 +371,7 @@ export default function ResultsPage() {
     if (next) fetchGallery(next)
   }, [activeDestIndex, sessionData, destinations.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Keyboard navigation ───────────────────────────────────────────────────────
+  // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") { e.preventDefault(); goNext() }
@@ -387,7 +381,7 @@ export default function ResultsPage() {
     return () => window.removeEventListener("keydown", onKey)
   }) // no dep array — always references latest nav functions
 
-  // ── Navigation helpers ────────────────────────────────────────────────────────
+  // Navigation helpers
   const goNext = useCallback(() => {
     setActiveDestIndex(i => {
       if (i >= destinations.length - 1) return i
@@ -409,7 +403,7 @@ export default function ResultsPage() {
     setActiveDestIndex(index)
   }
 
-  // ── Per-destination photo helpers ─────────────────────────────────────────────
+  // Per-destination photo helpers
   const getPhotos = (dest: Destination) => {
     const gallery = destGalleries[dest.name] ?? []
     return [dest.image || FALLBACK, ...gallery].filter(Boolean) as string[]
@@ -431,7 +425,7 @@ export default function ResultsPage() {
     setPhoto(dest.name, (getActivePhoto(dest.name) + 1) % photos.length)
   }
 
-  // ── Loading / empty states ────────────────────────────────────────────────────
+  // Loading / empty states
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -458,11 +452,11 @@ export default function ResultsPage() {
 
   const squad = sessionData.travelCompanion ?? "solo"
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // Render
   return (
     <div className="relative bg-background overflow-x-hidden">
 
-      {/* ── Destination slide area ─── */}
+      {/* Destination slide area */}
       <AnimatePresence mode="wait" custom={slideDir} initial={false}>
         <motion.div
           key={`dest-${activeDestIndex}`}
@@ -546,7 +540,7 @@ export default function ResultsPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
 
-                  {/* ── Top bar ── */}
+                  {/* Top bar */}
                   <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between z-20 gap-3">
                     {/* Left: back */}
                     <Button asChild variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/15 backdrop-blur-sm border border-white/20 rounded-full flex-shrink-0">
@@ -611,7 +605,7 @@ export default function ResultsPage() {
                     </div>
                   </div>
 
-                  {/* ── Center hero content ── */}
+                  {/* Center hero content */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 px-6 text-center">
                     <motion.div
                       key={`hero-content-${dest.name}`}
@@ -652,7 +646,7 @@ export default function ResultsPage() {
                     </motion.div>
                   </div>
 
-                  {/* ── Photo gallery nav arrows ── */}
+                  {/* Photo gallery nav arrows */}
                   {allPhotos.length > 1 && (
                     <>
                       <button onClick={() => prevPhoto(dest)} className="absolute left-4 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 text-white flex items-center justify-center transition-all" aria-label="Previous photo">
@@ -664,7 +658,7 @@ export default function ResultsPage() {
                     </>
                   )}
 
-                  {/* ── Bottom: CTAs + thumbnail strip ── */}
+                  {/* Bottom: CTAs + thumbnail strip */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
                     <div className="flex items-center justify-center gap-3 px-6 pb-4 flex-wrap">
                       <Button asChild size="lg" className="rounded-full px-7 py-5 text-sm font-semibold shadow-lg">
@@ -730,7 +724,7 @@ export default function ResultsPage() {
                 {/* ════ BODY SECTIONS ═════════════════════════════════════════ */}
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-16">
 
-                  {/* ── WHY YOU'LL LOVE IT ──────────────────────────────────── */}
+                  {/* WHY YOU'LL LOVE IT */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                     <div className="flex items-center gap-2 mb-6">
                       <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
@@ -811,7 +805,7 @@ export default function ResultsPage() {
                     </div>
                   </motion.section>
 
-                  {/* ── THINGS TO CONSIDER ──────────────────────────────────── */}
+                  {/* THINGS TO CONSIDER */}
                   {negatives.length > 0 && (
                     <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                       <div className="flex items-center gap-2 mb-6">
@@ -831,7 +825,7 @@ export default function ResultsPage() {
                     </motion.section>
                   )}
 
-                  {/* ── FAMOUS ATTRACTIONS ──────────────────────────────────── */}
+                  {/* FAMOUS ATTRACTIONS */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                     <div className="flex items-center gap-2 mb-6">
                       <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center">
@@ -859,7 +853,7 @@ export default function ResultsPage() {
                     </div>
                   </motion.section>
 
-                  {/* ── RECOMMENDED ACTIVITIES ─────────────────────────────── */}
+                  {/* RECOMMENDED ACTIVITIES */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                     <div className="flex items-center gap-2 mb-6">
                       <div className="h-8 w-8 rounded-lg bg-emerald-500 flex items-center justify-center">
@@ -898,7 +892,7 @@ export default function ResultsPage() {
                     )}
                   </motion.section>
 
-                  {/* ── WEATHER FORECAST ────────────────────────────────────── */}
+                  {/* WEATHER FORECAST */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                     <div className="flex items-center gap-2 mb-6">
                       <div className="h-8 w-8 rounded-lg bg-sky-500 flex items-center justify-center">
@@ -961,7 +955,7 @@ export default function ResultsPage() {
                     )}
                   </motion.section>
 
-                  {/* ── HOLIDAY OVERLAP ─────────────────────────────────────── */}
+                  {/* HOLIDAY OVERLAP */}
                   {(publicHolidays.length > 0 || events.length > 0) && (
                     <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                       <div className="flex items-center gap-2 mb-6">
@@ -1000,7 +994,7 @@ export default function ResultsPage() {
                     </motion.section>
                   )}
 
-                  {/* ── WHERE TO STAY & EAT ─────────────────────────────────── */}
+                  {/* WHERE TO STAY & EAT */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                     <div className="flex items-center gap-2 mb-6">
                       <div className="h-8 w-8 rounded-lg bg-blue-500 flex items-center justify-center">
@@ -1107,7 +1101,7 @@ export default function ResultsPage() {
                     )}
                   </motion.section>
 
-                  {/* ── EVENTS DURING YOUR TRIP ────────────────────────────── */}
+                  {/* EVENTS DURING YOUR TRIP */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                     <div className="flex items-center gap-2 mb-6">
                       <div className="h-8 w-8 rounded-lg bg-pink-500 flex items-center justify-center">
@@ -1146,7 +1140,7 @@ export default function ResultsPage() {
                     )}
                   </motion.section>
 
-                  {/* ── TRANSPORTATION OPTIONS ─────────────────────────────── */}
+                  {/* TRANSPORTATION OPTIONS */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                     <div className="flex items-center gap-2 mb-6">
                       <div className="h-8 w-8 rounded-lg bg-teal-500 flex items-center justify-center">
@@ -1194,7 +1188,7 @@ export default function ResultsPage() {
                     )}
                   </motion.section>
 
-                  {/* ── FINAL CTA ───────────────────────────────────────────── */}
+                  {/* FINAL CTA */}
                   <motion.section initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="rounded-3xl overflow-hidden border-2 border-primary/20 relative">
                     <div className="absolute inset-0">
                       <img src={allPhotos[2] || allPhotos[0] || FALLBACK} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.src = FALLBACK }} />
@@ -1235,7 +1229,7 @@ export default function ResultsPage() {
                     </div>
                   </motion.section>
 
-                  {/* ── Destination navigation footer ───────────────────────── */}
+                  {/* Destination navigation footer */}
                   <div className="flex items-center justify-center gap-6 pb-4 pt-2 border-t border-border/50">
                     <Button variant="ghost" size="sm" onClick={goPrev} disabled={activeDestIndex === 0} className="gap-2">
                       <ChevronLeft className="h-4 w-4" /> Previous
@@ -1266,7 +1260,7 @@ export default function ResultsPage() {
         </motion.div>
       </AnimatePresence>
 
-      {/* ── Available Packages (scoped to active destination only) ──────── */}
+      {/* Available Packages (scoped to active destination only) */}
       {!packagesLoading && !isLoading && sessionData && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 border-t border-border/50">
           <div className="flex items-center gap-2 mb-8">
@@ -1319,7 +1313,7 @@ export default function ResultsPage() {
         </section>
       )}
 
-      {/* ── Booking modal ─────────────────────────────────────────────────── */}
+      {/* Booking modal */}
       <AnimatePresence>
         {bookingPkg && (
           <BookingModal pkg={bookingPkg} onClose={() => setBookingPkg(null)} />

@@ -21,15 +21,14 @@
 
 import crypto from "crypto"
 
-// ─── Base URLs ────────────────────────────────────────────────────────────────
+// Base URLs
 // Using test environment — switch to api.hotelbeds.com once certified
 
 const BASE_HOTELS     = "https://api.test.hotelbeds.com/hotel-content-api/1.0"
 const BASE_ACTIVITIES = "https://api.test.hotelbeds.com/activities-api/1.0"
 const BASE_TRANSFERS  = "https://api.test.hotelbeds.com/transfer-api/1.0"
 
-// ─── HMAC helper ─────────────────────────────────────────────────────────────
-
+// HMAC helper
 function makeSignature(apiKey: string, secret: string): string {
   const timestamp = Math.floor(Date.now() / 1000).toString()
   return crypto
@@ -47,7 +46,7 @@ function makeHeaders(apiKey: string, secret: string): Record<string, string> {
   }
 }
 
-// ─── Destination code mapping ─────────────────────────────────────────────────
+// Destination code mapping
 // HotelBeds uses its own 3-letter codes distinct from IATA.
 // Keys are normalised to lowercase for lookup.
 
@@ -211,7 +210,7 @@ export function getDestinationCode(cityOrCountry: string): string | null {
   return DEST_CODES[key] ?? null
 }
 
-// ─── Destination resolution with Google Geocoding fallback ───────────────────
+// Destination resolution with Google Geocoding fallback
 // Simple in-process cache so repeated requests for the same unknown city don't
 // keep hitting the Geocoding API.
 
@@ -280,8 +279,7 @@ async function resolveDestinationCode(cityOrCountry: string): Promise<string | n
   }
 }
 
-// ─── Public interfaces ────────────────────────────────────────────────────────
-
+// Public interfaces
 export interface HotelbedsHotel {
   code:        string
   name:        string
@@ -317,8 +315,7 @@ export interface HotelbedsTransfer {
   duration:    string
 }
 
-// ─── Hotels ───────────────────────────────────────────────────────────────────
-
+// Hotels
 export async function fetchHotelbedsHotels(
   cityOrCountry: string,
   budget: string = "mid-range"
@@ -413,8 +410,7 @@ export async function fetchHotelbedsHotels(
   }
 }
 
-// ─── Activities ───────────────────────────────────────────────────────────────
-
+// Activities
 export async function fetchHotelbedsActivities(
   cityOrCountry: string,
   fromDate?: string,
@@ -521,8 +517,7 @@ export async function fetchHotelbedsActivities(
   }
 }
 
-// ─── Transfers ────────────────────────────────────────────────────────────────
-
+// Transfers
 export async function fetchHotelbedsTransfers(
   originAirportIATA: string,
   destinationCode:   string,
@@ -606,8 +601,7 @@ export async function fetchHotelbedsTransfers(
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// Helpers
 function parseStars(categoryCode: string): number {
   const m = (categoryCode ?? "").match(/^(\d)/)
   return m ? parseInt(m[1], 10) : 3
@@ -641,7 +635,7 @@ function extractAmenities(facilities: any[]): string[] {
     .filter(Boolean)
 }
 
-// ─── IATA airport lookup (used by Transfers) ──────────────────────────────────
+// IATA airport lookup (used by Transfers)
 // Maps HotelBeds destination codes to their nearest major airport IATA code.
 
 export const DEST_TO_AIRPORT: Record<string, string> = {

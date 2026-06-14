@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── LIGHT MODE ───────────────────────────────────────────────────────────── */
+/* LIGHT MODE */
 :root {
   --background: #F3FAFC;
   --foreground: #0F172A;
@@ -42,7 +42,7 @@
   --sidebar-ring: #32D4F5;
 }
 
-/* ── DARK MODE ────────────────────────────────────────────────────────────── */
+/* DARK MODE */
 .dark {
   --background: #030B12;
   --foreground: #FFFFFF;
@@ -79,7 +79,7 @@
   --sidebar-ring: #53D8F8;
 }
 
-/* ── TAILWIND V4 THEME MAPPING ─────────────────────────────────────────────── */
+/* TAILWIND V4 THEME MAPPING */
 @theme inline {
   --font-sans: "DM Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
@@ -122,7 +122,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* ── BASE ─────────────────────────────────────────────────────────────────── */
+/* BASE */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -138,7 +138,7 @@
   }
 }
 
-/* ── UTILITIES ────────────────────────────────────────────────────────────── */
+/* UTILITIES */
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

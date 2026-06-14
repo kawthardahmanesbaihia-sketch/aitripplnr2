@@ -20,7 +20,7 @@ interface DestinationCost {
   priceTier: 1 | 2 | 3 | 4
 }
 
-// ─── Cost database ────────────────────────────────────────────────────────────
+// Cost database
 // All 24 countries used in destination-matcher.ts.
 // Daily cost figures (USD/person) are realistic averages as of 2024.
 
@@ -51,7 +51,7 @@ const DESTINATION_COSTS: Record<string, DestinationCost> = {
   KE: { dailyCost: { budget: 50,  moderate: 120, luxury: 400 }, priceTier: 2 },
 }
 
-// ─── User budget → USD/day target range ──────────────────────────────────────
+// User budget → USD/day target range
 // Maps the user's selected label to a realistic expected daily spend range.
 
 type BudgetLabel = "low" | "budget" | "standard" | "medium" | "premium" | "high" | "luxury"
@@ -66,8 +66,7 @@ const BUDGET_RANGES: Record<BudgetLabel, { min: number; max: number; target: num
   luxury:   { min: 300, max: 9999, target: 500 },
 }
 
-// ─── Scoring function ─────────────────────────────────────────────────────────
-
+// Scoring function
 /**
  * Score how well a destination's cost matches the user's budget.
  * Returns 0–100.

@@ -17,7 +17,7 @@ import { DestinationDashboard } from "@/components/destination/DestinationDashbo
 import type { GeneratedDay } from "@/lib/destination-itinerary-generator"
 import type { SquadType } from "@/lib/travel-data"
 
-// ── Squad config ────────────────────────────────────────────────────────────
+// Squad config
 const SQUAD_CONFIG: Record<SquadType, { label: string; emoji: string; tagline: string }> = {
   solo:    { label: "Solo",    emoji: "👤", tagline: "Your personal adventure awaits" },
   couple:  { label: "Couple",  emoji: "💑", tagline: "A romantic escape for two" },
@@ -25,7 +25,7 @@ const SQUAD_CONFIG: Record<SquadType, { label: string; emoji: string; tagline: s
   family:  { label: "Family",  emoji: "👨‍👩‍👧",  tagline: "Fun for every generation" },
 }
 
-// ── Destination data shape expected by DestinationDashboard ─────────────────
+// Destination data shape expected by DestinationDashboard
 interface DestinationData {
   name: string
   matchPercentage: number
@@ -68,7 +68,7 @@ interface DestinationData {
   }>
 }
 
-// ── Fallbacks ────────────────────────────────────────────────────────────────
+// Fallbacks
 function fallbackHotels(budget: string): DestinationData["hotels"] {
   const all = [
     { name: "Grand Hotel",    rating: 4.5, description: "Elegant city-centre hotel with full amenities", price: "$150–200/night", priceLevel: "mid-range" as const, address: "123 Main Street, City Centre", amenities: ["WiFi", "Pool", "Spa"],            image: "https://images.unsplash.com/photo-1566073771259-6aafc604bd87?w=400&q=80" },
@@ -99,7 +99,7 @@ function fallbackActivities(): DestinationData["activities"] {
   ]
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// Page
 export default function SquadDestinationPage() {
   const params = useParams()
   const sessionId = params.sessionId as string
@@ -238,7 +238,7 @@ export default function SquadDestinationPage() {
     load()
   }, [session, selectedIndex, squad]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  // Loading state
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -256,7 +256,7 @@ export default function SquadDestinationPage() {
     )
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────────
+  // Empty state
   if (!destination) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -270,7 +270,7 @@ export default function SquadDestinationPage() {
     )
   }
 
-  // ── Premium dashboard — identical UI to solo mode ──────────────────────────
+  // Premium dashboard — identical UI to solo mode
   return (
     <DestinationDashboard
       destination={destination}

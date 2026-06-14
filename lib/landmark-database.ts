@@ -19,8 +19,7 @@ export interface CulturalMatch {
   region: string          // human-readable label for logging
 }
 
-// ── Normalization helper ──────────────────────────────────────────────────────
-
+// Normalization helper
 export function normalizeSignal(s: string): string {
   return s
     .toLowerCase()
@@ -31,11 +30,10 @@ export function normalizeSignal(s: string): string {
     .trim()
 }
 
-// ── Primary signal database ───────────────────────────────────────────────────
-
+// Primary signal database
 const SIGNAL_DB: Record<string, CulturalMatch> = {
 
-  // ── Algeria (maps to Morocco — closest available destination) ──────────────
+  // Algeria (maps to Morocco — closest available destination)
   "maqam echahid":              { destinations: ["morocco"], boost: 15, region: "Algeria" },
   "monument of the martyrs":    { destinations: ["morocco"], boost: 14, region: "Algeria" },
   "algiers":                    { destinations: ["morocco"], boost: 13, region: "Algeria" },
@@ -48,7 +46,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "notre dame d afrique":       { destinations: ["morocco"], boost: 12, region: "Algeria" },
   "basilica of notre dame":     { destinations: ["morocco"], boost: 6,  region: "Algeria / France" },
 
-  // ── Maghreb / North Africa ─────────────────────────────────────────────────
+  // Maghreb / North Africa
   "north africa":               { destinations: ["morocco"], boost: 9,  region: "North Africa" },
   "north african":              { destinations: ["morocco"], boost: 8,  region: "North Africa" },
   "maghreb":                    { destinations: ["morocco"], boost: 10, region: "Maghreb" },
@@ -57,18 +55,18 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "sahara":                     { destinations: ["morocco"], boost: 8,  region: "Sahara" },
   "saharan":                    { destinations: ["morocco"], boost: 7,  region: "Sahara" },
 
-  // ── Tunisia (maps to Morocco) ──────────────────────────────────────────────
+  // Tunisia (maps to Morocco)
   "tunisia":                    { destinations: ["morocco"], boost: 10, region: "Tunisia" },
   "tunisian":                   { destinations: ["morocco"], boost: 8,  region: "Tunisia" },
   "carthage":                   { destinations: ["morocco"], boost: 9,  region: "Tunisia" },
   "tunis":                      { destinations: ["morocco"], boost: 10, region: "Tunisia" },
   "sidi bou said":              { destinations: ["morocco"], boost: 11, region: "Tunisia" },
 
-  // ── Libya (maps to Morocco) ────────────────────────────────────────────────
+  // Libya (maps to Morocco)
   "libya":                      { destinations: ["morocco"], boost: 9,  region: "Libya → North Africa" },
   "leptis magna":               { destinations: ["morocco"], boost: 11, region: "Libya → North Africa" },
 
-  // ── Morocco ────────────────────────────────────────────────────────────────
+  // Morocco
   "morocco":                    { destinations: ["morocco"], boost: 15, region: "Morocco" },
   "moroccan":                   { destinations: ["morocco"], boost: 13, region: "Morocco" },
   "marrakech":                  { destinations: ["morocco"], boost: 14, region: "Morocco" },
@@ -90,7 +88,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "hassan ii mosque":           { destinations: ["morocco"], boost: 14, region: "Morocco" },
   "koutoubia mosque":           { destinations: ["morocco"], boost: 13, region: "Morocco" },
 
-  // ── Islamic / Arab World ──────────────────────────────────────────────────
+  // Islamic / Arab World
   "islamic architecture":       { destinations: ["morocco"], boost: 8,  region: "Islamic Architecture" },
   "arabic architecture":        { destinations: ["morocco"], boost: 8,  region: "Arabic Architecture" },
   "arab culture":               { destinations: ["morocco"], boost: 7,  region: "Arab Culture" },
@@ -101,7 +99,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "moorish":                    { destinations: ["morocco"], boost: 9,  region: "Moorish Architecture" },
   "mudejar":                    { destinations: ["morocco"], boost: 7,  region: "Moorish Architecture" },
 
-  // ── Japan ─────────────────────────────────────────────────────────────────
+  // Japan
   "japan":                      { destinations: ["japan"], boost: 15, region: "Japan" },
   "japanese":                   { destinations: ["japan"], boost: 12, region: "Japan" },
   "tokyo":                      { destinations: ["japan"], boost: 14, region: "Japan" },
@@ -126,7 +124,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "akihabara":                  { destinations: ["japan"], boost: 12, region: "Japan" },
   "japanese architecture":      { destinations: ["japan"], boost: 9,  region: "Japan" },
 
-  // ── France ───────────────────────────────────────────────────────────────
+  // France
   "france":                     { destinations: ["france"], boost: 15, region: "France" },
   "french":                     { destinations: ["france"], boost: 11, region: "France" },
   "paris":                      { destinations: ["france"], boost: 15, region: "France" },
@@ -146,7 +144,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "baguette":                   { destinations: ["france"], boost: 7,  region: "French Culture" },
   "haussmann":                  { destinations: ["france"], boost: 10, region: "French Architecture" },
 
-  // ── Italy ────────────────────────────────────────────────────────────────
+  // Italy
   "italy":                      { destinations: ["italy"], boost: 15, region: "Italy" },
   "italian":                    { destinations: ["italy"], boost: 11, region: "Italy" },
   "rome":                       { destinations: ["italy"], boost: 14, region: "Italy" },
@@ -167,7 +165,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "pasta":                      { destinations: ["italy"], boost: 7,  region: "Italian Cuisine" },
   "gelato":                     { destinations: ["italy"], boost: 7,  region: "Italian Cuisine" },
 
-  // ── Greece (maps to Italy — closest Mediterranean destination) ────────────
+  // Greece (maps to Italy — closest Mediterranean destination)
   "greece":                     { destinations: ["italy"], boost: 10, region: "Greece → Mediterranean" },
   "greek":                      { destinations: ["italy"], boost: 8,  region: "Greece → Mediterranean" },
   "santorini":                  { destinations: ["italy"], boost: 12, region: "Greece → Mediterranean" },
@@ -178,7 +176,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "white blue architecture":    { destinations: ["italy"], boost: 9,  region: "Greece → Mediterranean" },
   "greek ruins":                { destinations: ["italy"], boost: 9,  region: "Greece → Mediterranean" },
 
-  // ── Spain (maps to France/Morocco) ────────────────────────────────────────
+  // Spain (maps to France/Morocco)
   "spain":                      { destinations: ["france", "morocco"], boost: 8,  region: "Spain → Mediterranean" },
   "spanish":                    { destinations: ["france", "morocco"], boost: 6,  region: "Spain → Mediterranean" },
   "barcelona":                  { destinations: ["france"], boost: 9,  region: "Spain → France" },
@@ -187,7 +185,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "seville":                    { destinations: ["morocco"], boost: 9,  region: "Spain → Moorish" },
   "andalusia":                  { destinations: ["morocco"], boost: 9,  region: "Spain → Moorish" },
 
-  // ── Thailand ─────────────────────────────────────────────────────────────
+  // Thailand
   "thailand":                   { destinations: ["thailand"], boost: 15, region: "Thailand" },
   "thai":                       { destinations: ["thailand"], boost: 12, region: "Thailand" },
   "bangkok":                    { destinations: ["thailand"], boost: 14, region: "Thailand" },
@@ -204,7 +202,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "southeast asia":             { destinations: ["thailand", "bali"], boost: 5, region: "Southeast Asia" },
   "southeast asian":            { destinations: ["thailand", "bali"], boost: 5, region: "Southeast Asia" },
 
-  // ── Bali / Indonesia ──────────────────────────────────────────────────────
+  // Bali / Indonesia
   "bali":                       { destinations: ["bali"], boost: 15, region: "Bali" },
   "balinese":                   { destinations: ["bali"], boost: 13, region: "Bali" },
   "indonesia":                  { destinations: ["bali"], boost: 11, region: "Indonesia" },
@@ -221,7 +219,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "pura besakih":               { destinations: ["bali"], boost: 13, region: "Bali" },
   "hindu temple bali":          { destinations: ["bali"], boost: 12, region: "Bali" },
 
-  // ── Generic cultural styles (lower boost) ─────────────────────────────────
+  // Generic cultural styles (lower boost)
   "tropical":                   { destinations: ["thailand", "bali"], boost: 3, region: "Tropical" },
   "tropical resort":            { destinations: ["bali", "thailand"], boost: 5, region: "Tropical Resort" },
   "mediterranean":              { destinations: ["france", "italy", "morocco"], boost: 3, region: "Mediterranean" },
@@ -240,8 +238,7 @@ const SIGNAL_DB: Record<string, CulturalMatch> = {
   "hindu temple":               { destinations: ["bali"], boost: 7, region: "Hindu Temple" },
 }
 
-// ── Public matching function ──────────────────────────────────────────────────
-
+// Public matching function
 export interface CulturalMatchResult {
   boosts: Record<string, number>     // destination ID → total raw boost
   matchedSignals: string[]           // human-readable log of what matched

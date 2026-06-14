@@ -17,8 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface AnalyticsData {
   kpi: {
     total:            number
@@ -49,8 +48,7 @@ interface AnalyticsData {
   }>
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
+// Constants
 const COLORS = ["#16a34a", "#0ea5e9", "#f97316", "#a855f7", "#f59e0b", "#f43f5e"]
 
 const TIP_STYLE = {
@@ -68,8 +66,7 @@ const TIP_STYLE = {
 
 const AXIS_TICK = { fontSize: 11, fill: "hsl(var(--muted-foreground))" }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
+// Helpers
 function truncate(s: string, n: number) {
   return s.length > n ? s.slice(0, n) + "…" : s
 }
@@ -87,8 +84,7 @@ function buildTrend(raw: AnalyticsData["trend"]) {
   return result
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
+// Sub-components
 function SectionCard({
   icon: Icon,
   title,
@@ -159,8 +155,7 @@ function KpiCard({
   )
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
-
+// Empty state
 function EmptyState() {
   return (
     <motion.div
@@ -193,8 +188,7 @@ function EmptyState() {
   )
 }
 
-// ── Analytics content ─────────────────────────────────────────────────────────
-
+// Analytics content
 function AnalyticsContent({ data }: { data: AnalyticsData }) {
   const { kpi, topPackages, topDestinations, trend, conversion } = data
 
@@ -221,7 +215,7 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
   return (
     <div className="space-y-6">
 
-      {/* ── KPI cards ─────────────────────────────────────────────────────── */}
+      {/* KPI cards */}
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard label="Total Requests"    value={kpi.total}            icon={BarChart3}    color="text-foreground"  delay={0.10} />
         <KpiCard label="Accepted"          value={kpi.accepted}         icon={CheckCircle2} color="text-green-600"   delay={0.14} />
@@ -230,7 +224,7 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
         <KpiCard label="Unique Travelers"  value={kpi.unique_travelers} icon={Users}        color="text-primary"     delay={0.26} />
       </div>
 
-      {/* ── Trend chart ───────────────────────────────────────────────────── */}
+      {/* Trend chart */}
       <SectionCard
         icon={TrendingUp}
         title="Request Trend"
@@ -264,7 +258,7 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
         </ResponsiveContainer>
       </SectionCard>
 
-      {/* ── Top packages + top destinations ───────────────────────────────── */}
+      {/* Top packages + top destinations */}
       <div className="grid gap-6 lg:grid-cols-2">
 
         <SectionCard
@@ -318,7 +312,7 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
         </SectionCard>
       </div>
 
-      {/* ── Conversion metrics table ───────────────────────────────────────── */}
+      {/* Conversion metrics table */}
       {conversion.length > 0 && (
         <SectionCard
           icon={CheckCircle2}
@@ -380,8 +374,7 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
+// Page
 export default function AgencyAnalyticsPage() {
   const [data,    setData]    = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)

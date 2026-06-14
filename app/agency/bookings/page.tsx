@@ -12,8 +12,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface AgencyBooking {
   id:                  number
   package_id:          string
@@ -28,8 +27,7 @@ interface AgencyBooking {
   traveler_user_id:    number
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
-
+// Status badge
 const STATUS_STYLES = {
   pending:  "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25",
   accepted: "bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/25",
@@ -48,8 +46,7 @@ function StatusBadge({ status }: { status: AgencyBooking["status"] }) {
   )
 }
 
-// ── Booking card ──────────────────────────────────────────────────────────────
-
+// Booking card
 function BookingCard({
   booking,
   onAction,
@@ -156,8 +153,7 @@ function BookingCard({
   )
 }
 
-// ── Page content ──────────────────────────────────────────────────────────────
-
+// Page content
 function AgencyBookingsContent() {
   const [bookings,      setBookings]      = useState<AgencyBooking[]>([])
   const [loading,       setLoading]       = useState(true)
@@ -285,8 +281,7 @@ function AgencyBookingsContent() {
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
+// Page
 export default function AgencyBookingsPage() {
   return (
     <ProtectedRoute requiredRole="agency">

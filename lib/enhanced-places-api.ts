@@ -12,8 +12,7 @@
  *   • Exported interfaces for backward compatibility
  */
 
-// ─── Interfaces ───────────────────────────────────────────────────────────────
-
+// Interfaces
 export interface EnhancedHotel {
   name:      string
   rating:    number
@@ -46,8 +45,7 @@ export interface MapMarker {
   info:     { rating?: number; price?: string; cuisine?: string }
 }
 
-// ─── City-level coordinates (100+ cities) ────────────────────────────────────
-
+// City-level coordinates (100+ cities)
 export const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   // Spain
   Barcelona:        { lat: 41.3851,  lng: 2.1734   },
@@ -248,8 +246,7 @@ export const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   Suva:             { lat: -18.1248, lng: 178.4501 },
 }
 
-// ─── Country-level default coordinates ───────────────────────────────────────
-
+// Country-level default coordinates
 export const countryCityData: Record<string, { city: string; lat: number; lng: number }> = {
   France:             { city: "Paris",           lat: 48.8566,  lng: 2.3522   },
   Italy:              { city: "Rome",            lat: 41.9028,  lng: 12.4964  },
@@ -303,7 +300,7 @@ export const countryCityData: Record<string, { city: string; lat: number; lng: n
   Ukraine:            { city: "Kyiv",            lat: 50.4501,  lng: 30.5234  },
 }
 
-// ─── Deprecated stubs ─────────────────────────────────────────────────────────
+// Deprecated stubs
 // Kept so existing import sites compile.  Callers must migrate.
 
 /** @deprecated Use lib/hotelbeds-client.ts → fetchHotelbedsHotels() */
@@ -318,7 +315,7 @@ export async function fetchEnhancedRestaurants(): Promise<EnhancedRestaurant[]> 
   return []
 }
 
-// ─── Map-marker builder ───────────────────────────────────────────────────────
+// Map-marker builder
 // Builds markers from real lat/lng returned by the live hotel and restaurant APIs.
 
 export function generateMapMarkers(

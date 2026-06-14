@@ -23,7 +23,7 @@ export default async function ExploreDashboardPage({
   const entry = DESTINATIONS.find((d) => d.id === destId)
   if (!entry) notFound()
 
-  // ── Squad-filtered data ───────────────────────────────────────────────────
+  // Squad-filtered data
   const hotels = entry.hotels
     .filter((h) => h.squadTags.includes(squad))
     .map((h) => ({
@@ -70,7 +70,7 @@ export default async function ExploreDashboardPage({
       description: e.description,
     }))
 
-  // ── Map markers — approximate coords offset from city centre ────────────
+  // Map markers — approximate coords offset from city centre
   const { lat, lng } = entry.mapCenter
   const mapMarkers = [
     ...hotels.slice(0, 3).map((h, i) => ({
@@ -96,7 +96,7 @@ export default async function ExploreDashboardPage({
     })),
   ]
 
-  // ── Render the shared dashboard — same components as every other mode ─────
+  // Render the shared dashboard — same components as every other mode
   return (
     <DestinationDashboard
       destination={{

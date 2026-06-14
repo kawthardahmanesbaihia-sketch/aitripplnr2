@@ -12,20 +12,17 @@
 import { env } from "@xenova/transformers"
 import { ensureModels } from "./clip-embeddings"
 
-// ── Model configuration ───────────────────────────────────────────────────────
-
+// Model configuration
 env.allowRemoteModels = true
 env.cacheDir = process.env.TRANSFORMERS_CACHE ?? "./.cache/transformers"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 export interface LabelScore {
   label: string
   score: number
 }
 
-// ── Startup warmup ────────────────────────────────────────────────────────────
-
+// Startup warmup
 let _prewarmStarted = false
 
 /**
@@ -43,8 +40,7 @@ export function prewarm(): void {
   })
 }
 
-// ── Cosine similarity utility ─────────────────────────────────────────────────
-
+// Cosine similarity utility
 export function cosineSimilarity(a: Float32Array, b: Float32Array): number {
   let dot = 0, normA = 0, normB = 0
   for (let i = 0; i < a.length; i++) {

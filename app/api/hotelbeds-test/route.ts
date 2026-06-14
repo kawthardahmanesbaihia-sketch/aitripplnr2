@@ -17,8 +17,7 @@ import crypto from "crypto"
 export const dynamic    = "force-dynamic"
 export const revalidate = 0
 
-// ─── Test constants ───────────────────────────────────────────────────────────
-
+// Test constants
 const DEST        = "BCN"   // HotelBeds destination code — Barcelona
 const IATA        = "BCN"   // Airport IATA — Barcelona El Prat
 const ATLAS_HOTEL = "265"   // HotelBeds Atlas hotel code (example near BCN airport)
@@ -32,8 +31,7 @@ const TO_DATE = (() => {
   return d.toISOString().split("T")[0]
 })()
 
-// ─── HMAC auth ────────────────────────────────────────────────────────────────
-
+// HMAC auth
 function sign(apiKey: string, secret: string) {
   const ts = Math.floor(Date.now() / 1000).toString()
   const sig = crypto.createHash("sha256").update(apiKey + secret + ts).digest("hex")
@@ -41,8 +39,7 @@ function sign(apiKey: string, secret: string) {
   return { "Api-key": apiKey, "X-Signature": sig, "Accept": "application/json", "Content-Type": "application/json" }
 }
 
-// ─── Individual API tests ─────────────────────────────────────────────────────
-
+// Individual API tests
 async function testHotels() {
   const apiKey = process.env.HOTELBEDS_HOTELS_API_KEY
   const secret = process.env.HOTELBEDS_HOTELS_SECRET
@@ -209,8 +206,7 @@ async function testTransfersCache() {
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// Helpers
 function missingCreds(api: string, key: any, secret: any) {
   return {
     api, success: false, status: null, recordCount: 0, sampleNames: [],
@@ -225,8 +221,7 @@ function fetchError(api: string, endpoint: string, err: unknown) {
   }
 }
 
-// ─── Route handler ────────────────────────────────────────────────────────────
-
+// Route handler
 export async function GET() {
   console.log("=== [hb-test] HotelBeds diagnostic — start ===")
   console.log(`[hb-test] Date window: ${FROM_DATE} → ${TO_DATE}`)

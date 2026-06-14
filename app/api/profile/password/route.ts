@@ -6,8 +6,7 @@ import { requireAuth } from "@/lib/auth"
 
 export const dynamic = "force-dynamic"
 
-// ── PUT /api/profile/password ─────────────────────────────────────────────────
-
+// PUT /api/profile/password
 export async function PUT(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth

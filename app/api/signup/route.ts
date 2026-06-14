@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       role = "user",
     } = body as Record<string, string>
 
-    // ── Field presence ─────────────────────────────────────────────────────────
+    // Field presence
     if (!username?.trim() || !email?.trim() || !password) {
       return NextResponse.json(
         { error: "username, email, and password are required" },
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ── Username rules ─────────────────────────────────────────────────────────
+    // Username rules
     const cleanUsername = username.trim()
     if (cleanUsername.length < 3 || cleanUsername.length > 50) {
       return NextResponse.json(
@@ -42,13 +42,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ── Email format ───────────────────────────────────────────────────────────
+    // Email format
     const cleanEmail = email.trim().toLowerCase()
     if (!validateEmailFormat(cleanEmail)) {
       return NextResponse.json({ error: "Invalid email address format" }, { status: 400 })
     }
 
-    // ── DNS MX validation ──────────────────────────────────────────────────────
+    // DNS MX validation
     const mxResult = await validateEmailDomain(cleanEmail)
     if (!mxResult.valid) {
       return NextResponse.json(
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ── Password strength ──────────────────────────────────────────────────────
+    // Password strength
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters" },
@@ -65,12 +65,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ── Role validation ────────────────────────────────────────────────────────
+    // Role validation
     if (!["user", "agency"].includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 })
     }
 
-    // ── Uniqueness ─────────────────────────────────────────────────────────────
+    // Uniqueness
     const [existing] = await db.query<RowDataPacket[]>(
       "SELECT id, email, username FROM users WHERE email = ? OR username = ? LIMIT 2",
       [cleanEmail, cleanUsername]
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email or username already registered" },             { status: 409 })
     }
 
-    // ── Hash & insert ──────────────────────────────────────────────────────────
+    // Hash & insert
     const hashed = await bcrypt.hash(password, 12)
 
     const [result] = await db.query<ResultSetHeader>(
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         .catch((e) => console.warn("[signup] agencies insert failed:", e.message))
     }
 
-    // ── Sign JWT + set cookie ──────────────────────────────────────────────────
+    // Sign JWT + set cookie
     const token = await signToken({
       userId,
       role: role as "user" | "agency",

@@ -15,8 +15,7 @@ import {
 import Link from "next/link"
 import type { Package } from "@/types/package"
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
+// Helpers
 type Status = "active" | "draft" | "featured"
 
 function statusOf(pkg: Package): Status {
@@ -35,8 +34,7 @@ const STATUS_LABELS: Record<Status, string> = {
 
 const FALLBACK = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80"
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
+// Page
 export default function ViewPackagePage() {
   const { packages, isLoading } = usePackages()
   const params    = useParams()
@@ -52,7 +50,7 @@ export default function ViewPackagePage() {
     else       setNotFound(true)
   }, [packages, packageId, isLoading])
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  // Loading
   if (isLoading || (!pkg && !notFound)) {
     return (
       <ProtectedRoute requiredRole="agency">
@@ -63,7 +61,7 @@ export default function ViewPackagePage() {
     )
   }
 
-  // ── Not found ──────────────────────────────────────────────────────────────
+  // Not found
   if (notFound || !pkg) {
     return (
       <ProtectedRoute requiredRole="agency">
@@ -92,7 +90,7 @@ export default function ViewPackagePage() {
     <ProtectedRoute requiredRole="agency">
       <div className="container mx-auto max-w-4xl px-4 py-8">
 
-        {/* ── Header ──────────────────────────────────────────────────────── */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -121,7 +119,7 @@ export default function ViewPackagePage() {
           </div>
         </motion.div>
 
-        {/* ── Hero Image ──────────────────────────────────────────────────── */}
+        {/* Hero Image */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -160,7 +158,7 @@ export default function ViewPackagePage() {
 
         <div className="space-y-5">
 
-          {/* ── Description ─────────────────────────────────────────────── */}
+          {/* Description */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -174,7 +172,7 @@ export default function ViewPackagePage() {
             </Card>
           </motion.div>
 
-          {/* ── Services ────────────────────────────────────────────────── */}
+          {/* Services */}
           {(includedList.length > 0 || excludedList.length > 0) && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -217,7 +215,7 @@ export default function ViewPackagePage() {
             </motion.div>
           )}
 
-          {/* ── Tags ────────────────────────────────────────────────────── */}
+          {/* Tags */}
           {pkg.tags.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -243,7 +241,7 @@ export default function ViewPackagePage() {
             </motion.div>
           )}
 
-          {/* ── Contact + Package Info ───────────────────────────────────── */}
+          {/* Contact + Package Info */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

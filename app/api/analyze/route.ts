@@ -33,7 +33,7 @@ import {
 prewarm()
 prewarmTextEmbeddings().catch(() => {})
 
-// ── Destination ID → ISO 2-letter code (for flag emoji in UI) ────────────────
+// Destination ID → ISO 2-letter code (for flag emoji in UI)
 const DEST_TO_ISO: Record<string, string> = {
   japan: "JP", france: "FR", thailand: "TH", italy: "IT",
   morocco: "MA", greece: "GR", spain: "ES", dubai: "AE",
@@ -62,8 +62,7 @@ const DEST_TO_ISO: Record<string, string> = {
   bolivia: "BO", guatemala: "GT", nicaragua: "NI", laos: "LA", hongkong: "HK",
 }
 
-// ── Response helpers ──────────────────────────────────────────────────────────
-
+// Response helpers
 function priceToStyle(priceLevel: string): "budget" | "mid-range" | "luxury" {
   if (priceLevel === "luxury") return "luxury"
   if (priceLevel === "mid-range") return "mid-range"
@@ -77,8 +76,6 @@ function buildSummary(destinations: Array<{ name: string }>, language: string): 
   if (language === "ar") return `بناءً على تفضيلاتك المرئية، ${top.name} هي الوجهة المناسبة لك.`
   return `Based on your visual preferences, ${top.name} is a perfect match for you.`
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -111,7 +108,7 @@ export async function POST(request: NextRequest) {
       `[Pipeline] Source=CLIP_ONLY | images=${imageUrls.length} | squad=${squadType ?? "none"} | seed=${requestSeed}`
     )
 
-    // ── CLIP is the SOLE recommendation engine — no template tags, no Gemini ──
+    // CLIP is the SOLE recommendation engine — no template tags, no Gemini
     let clipResult: Awaited<ReturnType<typeof rankDestinationsByCLIP>>
     try {
       clipResult = await rankDestinationsByCLIP(imageUrls.slice(0, 5), squadType)
@@ -123,7 +120,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ── Phase 6: Final ranking log ────────────────────────────────────────────
+    // Phase 6: Final ranking log
     console.log(
       `[Ranking] Final scores: ` +
       clipResult.ranked.slice(0, 8).map(r => `${r.id}=${r.score.toFixed(1)}`).join(" > ")

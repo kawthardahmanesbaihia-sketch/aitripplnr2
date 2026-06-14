@@ -6,8 +6,7 @@
 import { z } from "zod"
 import { NextResponse, type NextRequest } from "next/server"
 
-// ── Shared primitives ─────────────────────────────────────────────────────────
-
+// Shared primitives
 const squadEnum = z.enum(["solo", "couple", "friends", "family"]).optional().nullable()
 
 const imageUrlField = z
@@ -27,8 +26,7 @@ const imageMetadataItem = z
   .object({ url: imageUrlField })
   .passthrough()   // allow extra fields (templateTags etc.) — they are ignored
 
-// ── /api/analyze ─────────────────────────────────────────────────────────────
-
+// /api/analyze
 export const AnalyzeBodySchema = z.object({
   imageMetadata: z
     .array(imageMetadataItem)
@@ -49,8 +47,7 @@ export const AnalyzeBodySchema = z.object({
 
 export type AnalyzeBody = z.infer<typeof AnalyzeBodySchema>
 
-// ── /api/explore-analyze ─────────────────────────────────────────────────────
-
+// /api/explore-analyze
 export const ExploreBodySchema = z.object({
   images: z
     .array(imageUrlField)
@@ -61,8 +58,7 @@ export const ExploreBodySchema = z.object({
 
 export type ExploreBody = z.infer<typeof ExploreBodySchema>
 
-// ── /api/multiplayer/analyze ─────────────────────────────────────────────────
-
+// /api/multiplayer/analyze
 export const MultiplayerBodySchema = z.object({
   preferences: z.object({
     imageMetadata: z.array(imageMetadataItem).max(30).optional(),
@@ -75,8 +71,7 @@ export const MultiplayerBodySchema = z.object({
 
 export type MultiplayerBody = z.infer<typeof MultiplayerBodySchema>
 
-// ── Validation helper ─────────────────────────────────────────────────────────
-
+// Validation helper
 export function parseBody<T>(
   schema: z.ZodSchema<T>,
   raw: unknown
@@ -98,8 +93,7 @@ export function parseBody<T>(
   }
 }
 
-// ── In-memory rate limiter (per IP, per minute) ───────────────────────────────
-
+// In-memory rate limiter (per IP, per minute)
 interface RateRecord {
   count:   number
   resetAt: number

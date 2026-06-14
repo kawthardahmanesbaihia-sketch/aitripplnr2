@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { generateSeed, shuffleArrayWithSeed } from "@/lib/seed-randomizer"
+import { generateSeed } from "@/lib/seed-randomizer"
 import type { SharedPreferences } from "@/lib/firebase-utils"
 import { applySquadAdjustments, type MergedTravelProfile } from "@/lib/travel-profile-merger"
 import {
@@ -25,7 +25,7 @@ prewarmTextEmbeddings().catch(() => {})
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-// ── ISO mapping for flag emoji ────────────────────────────────────────────────
+// ISO mapping for flag emoji
 const DEST_TO_ISO: Record<string, string> = {
   japan: "JP", france: "FR", thailand: "TH", italy: "IT",
   morocco: "MA", greece: "GR", spain: "ES", dubai: "AE",
@@ -54,7 +54,7 @@ const DEST_TO_ISO: Record<string, string> = {
   bolivia: "BO", guatemala: "GT", nicaragua: "NI", laos: "LA", hongkong: "HK",
 }
 
-// ── Squad bonuses — complete 39-destination table, mirrors clip-scorer.ts ─────
+// Squad bonuses — complete 39-destination table, mirrors clip-scorer.ts
 const SQUAD_BONUS: Record<string, Record<string, number>> = {
   solo: {
     japan: 4, vietnam: 4, morocco: 3, thailand: 3, india: 3, bali: 2, greece: 2, spain: 2,
@@ -90,12 +90,12 @@ const SQUAD_BONUS: Record<string, Record<string, number>> = {
   },
 }
 
-// ── Score → percentage ────────────────────────────────────────────────────────
+// Score → percentage
 function scoreToPercent(score: number, rank: number): number {
   return Math.max(60, Math.min(95, Math.round((score / 250) * 100) - rank * 2))
 }
 
-// ── Positives / negatives — simplified (profile no longer available for CLIP path) ──
+// Positives / negatives — simplified (profile no longer available for CLIP path)
 function generatePositives(dest: ExploreDestination, _profile: MergedTravelProfile | null): string[] {
   const p: string[] = []
   if (dest.scores.nature > 88)   p.push("Breathtaking natural landscapes")
@@ -119,7 +119,7 @@ function generateNegatives(dest: ExploreDestination, _profile: MergedTravelProfi
   return n.slice(0, 2)
 }
 
-// ── Build a minimal MergedTravelProfile from shared session preferences ────────
+// Build a minimal MergedTravelProfile from shared session preferences
 // Used when no image analysis is available (text-only shared preferences).
 function sharedPrefsToProfile(prefs: SharedPreferences): MergedTravelProfile {
   const budgetMap: Record<string, "low" | "medium" | "high" | "ultra"> = {
@@ -170,14 +170,12 @@ function sharedPrefsToProfile(prefs: SharedPreferences): MergedTravelProfile {
   }
 }
 
-// ── Multiplayer summary ───────────────────────────────────────────────────────
+// Multiplayer summary
 function generateSummary(destinations: Array<{ name: string }>, playerCount: number, interests: string[]): string {
   const top = destinations[0]
   const interestStr = interests.length > 0 ? `including ${interests.slice(0, 3).join(", ")}, ` : ""
   return `Based on ${playerCount} ${playerCount === 1 ? "player" : "players"} collaborative preferences ${interestStr}${top?.name ?? "your chosen destination"} is perfectly matched for your group.`
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   // Rate limiting
@@ -204,13 +202,17 @@ export async function POST(request: NextRequest) {
     const squadType = (preferences.squad ?? "friends") as "solo" | "couple" | "friends" | "family"
 
     let ranked: Awaited<ReturnType<typeof rankDestinations>>
+    let vibes: string[] = []
+    let travelStyle: string = "adventure"
 
     if (imageUrls.length > 0) {
-      // ── CLIP semantic engine on all players' images ───────────────────────
+      // CLIP semantic engine on all players' images
       console.log("[multiplayer-analyze] CLIP vision on", imageUrls.length, "image(s) from", playerCount, "player(s)")
       try {
-        const result = await rankDestinationsByCLIP(imageUrls.slice(0, 5), squadType)
-        ranked = result.ranked
+        const clipResult = await rankDestinationsByCLIP(imageUrls.slice(0, 5), squadType)
+        ranked = clipResult.ranked
+        vibes = clipResult.vibes
+        travelStyle = clipResult.travelStyle
       } catch (clipErr) {
         // CLIP failed — fall back to text-only profile scoring (no Gemini)
         console.warn("[multiplayer-analyze] CLIP failed — falling back to text-only profile scoring:", clipErr)
@@ -229,7 +231,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
-      // ── Text-only path: build from shared session preferences ────────────────
+      // Text-only path: build from shared session preferences
       console.log("[multiplayer-analyze] Text-only profile from shared preferences")
       let mergedProfile = sharedPrefsToProfile(preferences as SharedPreferences)
       if (Array.isArray(preferences.interests) && preferences.interests.length > 0) {
@@ -247,18 +249,20 @@ export async function POST(request: NextRequest) {
     }
 
     const requestSeed = generateSeed()
-    let topDestinations = shuffleArrayWithSeed(ranked, requestSeed).slice(0, 3)
+    const topDestinations = ranked.slice(0, 3)
 
     console.log(
       "[multiplayer-analyze] Top 3: " +
       topDestinations.map(r => `${r.id}=${r.score.toFixed(1)}`).join(", ")
     )
 
-    // ── Build response ────────────────────────────────────────────────────────
+    // Build response — shape matches /api/analyze so /results page can be used directly
     const countries = topDestinations.map((dest, index) => {
       const exploreDest = EXPLORE_DESTINATIONS[dest.id]
       const travelEntry = DESTINATIONS.find(d => d.id === dest.id)
       const matchPct    = scoreToPercent(dest.score, index)
+      const topCity     = exploreDest?.cities[0]
+      const s           = dest.score
 
       const hotels = (travelEntry?.hotels ?? []).slice(0, 3).map(h => ({
         name:           h.name,
@@ -275,32 +279,31 @@ export async function POST(request: NextRequest) {
       return {
         name:            dest.name,
         code:            DEST_TO_ISO[dest.id] ?? "XX",
+        city:            topCity?.name ?? null,
         matchPercentage: matchPct,
+        reason:          positives[0] ?? null,
+        image:           dest.heroImage ?? null,
+        tags:            vibes,
+        shortSummary:    topCity?.tagline ?? exploreDest?.atmosphereTags.slice(0, 3).join(" · ") ?? "",
+        climate:         exploreDest?.climates[0] ?? "temperate",
+        vibe:            travelStyle,
         confidenceBreakdown: {
-          activity: Math.round(65 + Math.random() * 20),
-          climate:  Math.round(65 + Math.random() * 20),
-          mood:     Math.round(65 + Math.random() * 20),
-          food:     Math.round(65 + Math.random() * 15),
-          budget:   Math.round(65 + Math.random() * 20),
-          season:   Math.round(65 + Math.random() * 15),
+          activity: Math.round(60 + (s / 100) * 35),
+          climate:  Math.round(60 + (s / 100) * 32),
+          mood:     Math.round(60 + (s / 100) * 33),
+          food:     Math.round(60 + (s / 100) * 28),
         },
         positives,
         negatives,
-        climate:       exploreDest?.climates[0] ?? "temperate",
-        activities:    exploreDest?.activities ?? [],
-        foodHighlights:(travelEntry?.restaurants ?? []).slice(0, 3).map(r => r.name),
-        cities:        (exploreDest?.cities ?? []).map(c => ({
-          city:      c.name,
-          why:       c.tagline,
-          bestFor:   c.bestFor,
-          budgetFit: c.budgetFit,
-        })),
+        activities:      exploreDest?.activities ?? [],
+        foodHighlights:  (travelEntry?.restaurants ?? []).slice(0, 4).map(r => r.name),
         hotels,
       }
     })
 
     return NextResponse.json({
       requestSeed,
+      travelCompanion: squadType,
       userProfile: {
         dominantMood:         ranked[0] ? EXPLORE_DESTINATIONS[ranked[0].id]?.travelStyles[0] ?? "adventure" : "adventure",
         preferredClimate:     ranked[0] ? EXPLORE_DESTINATIONS[ranked[0].id]?.climates[0] ?? "temperate" : "temperate",

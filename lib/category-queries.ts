@@ -1,6 +1,6 @@
 import type { ImageTemplateTags } from "./image-templates"
 
-// ── Visual-diversity metadata types ───────────────────────────────────────────
+// Visual-diversity metadata types
 export type ClimateFamily =
   | "warm_tropical"
   | "warm_arid"
@@ -38,7 +38,7 @@ export interface CategoryQueryEntry {
  * shuffled requests produce a diverse, Pinterest-style feed.
  */
 export const CATEGORY_QUERY_POOLS: Record<string, CategoryQueryEntry[]> = {
-  // ── NATURE ───────────────────────────────────────────────────────────────────
+  // NATURE
   nature: [
     { id: "nature_snowy_peaks",      query: "snowy mountain peaks winter alpine dramatic",          tags: { budget: "mid-range", travelers: "solo",    interests: ["mountains", "hiking"],         tripStyle: "adventure", climate: "cold",          foodStyle: "local",       environment: "mountain",     vibe: "adventurous" } },
     { id: "nature_desert_dunes",     query: "desert sand dunes golden light sunset warm",           tags: { budget: "mid-range", travelers: "couple",   interests: ["desert", "photography"],       tripStyle: "adventure", climate: "desert",        foodStyle: "local",       environment: "desert",       vibe: "adventurous" } },
@@ -67,7 +67,7 @@ export const CATEGORY_QUERY_POOLS: Record<string, CategoryQueryEntry[]> = {
     { id: "nature_mangrove",         query: "mangrove forest tropical roots green water",          tags: { budget: "budget",    travelers: "solo",     interests: ["nature", "kayaking"],          tripStyle: "adventure", climate: "tropical",      foodStyle: "local",       environment: "nature",       vibe: "peaceful"    } },
   ],
 
-  // ── CITY ─────────────────────────────────────────────────────────────────────
+  // CITY
   city: [
     { id: "city_cyberpunk",          query: "Tokyo Shibuya neon cyberpunk night rain street",       tags: { budget: "mid-range", travelers: "solo",    interests: ["nightlife", "photography"],    tripStyle: "cultural",  climate: "temperate",     foodStyle: "street-food", environment: "city",         vibe: "social"      } },
     { id: "city_medieval",           query: "European medieval cobblestone old town architecture",   tags: { budget: "mid-range", travelers: "couple",  interests: ["history", "architecture"],     tripStyle: "cultural",  climate: "temperate",     foodStyle: "local",       environment: "city",         vibe: "cultural"    } },
@@ -96,7 +96,7 @@ export const CATEGORY_QUERY_POOLS: Record<string, CategoryQueryEntry[]> = {
     { id: "city_chicago",            query: "Chicago river architecture skyscraper boat golden",   tags: { budget: "mid-range", travelers: "friends", interests: ["architecture", "city"],        tripStyle: "cultural",  climate: "temperate",     foodStyle: "diverse",     environment: "city",         vibe: "cultural"    } },
   ],
 
-  // ── FOOD ─────────────────────────────────────────────────────────────────────
+  // FOOD
   food: [
     { id: "food_night_market",       query: "Asian night market street food lanterns glowing",     tags: { budget: "budget",    travelers: "friends", interests: ["food", "culture"],             tripStyle: "foodie",    climate: "tropical",      foodStyle: "street-food", environment: "city",         vibe: "social"      } },
     { id: "food_fine_dining",        query: "fine dining gourmet elegant plating restaurant chef",  tags: { budget: "luxury",    travelers: "couple",  interests: ["gastronomy", "luxury"],        tripStyle: "foodie",    climate: "temperate",     foodStyle: "fine-dining", environment: "city",         vibe: "luxurious"   } },
@@ -125,7 +125,7 @@ export const CATEGORY_QUERY_POOLS: Record<string, CategoryQueryEntry[]> = {
     { id: "food_korean_street",      query: "Korean street food stalls colorful tteokbokki neon",  tags: { budget: "budget",    travelers: "solo",    interests: ["food", "culture"],             tripStyle: "foodie",    climate: "temperate",     foodStyle: "street-food", environment: "city",         vibe: "social"      } },
   ],
 
-  // ── BEACHES ──────────────────────────────────────────────────────────────────
+  // BEACHES
   beaches: [
     { id: "beach_caribbean",         query: "Caribbean turquoise paradise white sand palm trees",   tags: { budget: "mid-range", travelers: "couple",  interests: ["beach", "relaxation"],         tripStyle: "relaxed",   climate: "tropical",      foodStyle: "seafood",     environment: "beach",        vibe: "peaceful"    } },
     { id: "beach_mediterranean",     query: "Mediterranean rocky cove turquoise cliff boat",       tags: { budget: "mid-range", travelers: "couple",  interests: ["beach", "sailing"],            tripStyle: "relaxed",   climate: "mediterranean", foodStyle: "seafood",     environment: "beach",        vibe: "romantic"    } },
@@ -154,7 +154,7 @@ export const CATEGORY_QUERY_POOLS: Record<string, CategoryQueryEntry[]> = {
     { id: "beach_thatched_hut",      query: "thatched beach hut tropical overwater wooden",        tags: { budget: "luxury",    travelers: "couple",  interests: ["relaxation", "luxury"],        tripStyle: "relaxed",   climate: "tropical",      foodStyle: "seafood",     environment: "beach",        vibe: "romantic"    } },
   ],
 
-  // ── CULTURE ──────────────────────────────────────────────────────────────────
+  // CULTURE
   culture: [
     { id: "culture_holi",            query: "Indian Holi festival colors powder celebration crowd", tags: { budget: "budget",    travelers: "friends", interests: ["festivals", "culture"],        tripStyle: "cultural",  climate: "tropical",      foodStyle: "local",       environment: "city",         vibe: "social"      } },
     { id: "culture_geisha",          query: "Japanese geisha kimono traditional Kyoto street",      tags: { budget: "luxury",    travelers: "couple",  interests: ["culture", "history"],          tripStyle: "cultural",  climate: "temperate",     foodStyle: "local",       environment: "city",         vibe: "cultural"    } },
@@ -183,7 +183,7 @@ export const CATEGORY_QUERY_POOLS: Record<string, CategoryQueryEntry[]> = {
     { id: "culture_easter_island",   query: "Easter Island Moai stone statues dramatic volcanic",    tags: { budget: "mid-range", travelers: "solo",    interests: ["history", "adventure"],        tripStyle: "adventure", climate: "temperate",     foodStyle: "local",       environment: "nature",       vibe: "adventurous" } },
   ],
 
-  // ── ACTIVITIES ───────────────────────────────────────────────────────────────
+  // ACTIVITIES
   activities: [
     { id: "act_hot_air_balloon",     query: "hot air balloon sunrise landscape aerial colorful",     tags: { budget: "mid-range", travelers: "couple",  interests: ["adventure", "photography"],    tripStyle: "adventure", climate: "temperate",     foodStyle: "local",       environment: "countryside",  vibe: "romantic"    } },
     { id: "act_scuba_diving",        query: "scuba diving coral reef tropical colorful fish",        tags: { budget: "mid-range", travelers: "friends", interests: ["diving", "swimming"],          tripStyle: "adventure", climate: "tropical",      foodStyle: "seafood",     environment: "beach",        vibe: "adventurous" } },

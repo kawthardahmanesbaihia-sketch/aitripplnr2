@@ -19,8 +19,7 @@ let _hits = 0
 let _misses = 0
 const _startTs = Date.now()
 
-// ── Image score cache ─────────────────────────────────────────────────────────
-
+// Image score cache
 export function getCachedImageScores(url: string): LabelScore[] | null {
   const e = _cache.get(url)
   if (e) { _hits++; return e.scores }
@@ -41,8 +40,7 @@ export function setCachedImageScores(url: string, scores: LabelScore[]): void {
   _cache.set(url, { scores, ts: Date.now() })
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
-
+// Stats
 export function getImageCacheStats(): {
   size: number; maxSize: number; hits: number; misses: number; uptimeMs: number
 } {

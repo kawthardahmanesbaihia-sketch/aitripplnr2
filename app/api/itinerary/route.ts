@@ -8,8 +8,7 @@ import { getCountryCode } from '@/lib/destination-image-generator'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// Helpers
 function getDatesBetween(start: string, end: string): string[] {
   const dates: string[] = []
   const cur = new Date(start)
@@ -41,8 +40,7 @@ function parseCost(budgetStr: string): number {
 // Safe Unsplash fallback (static, avoids the deprecated source.unsplash.com)
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80'
 
-// ─── Route ────────────────────────────────────────────────────────────────────
-
+// Route
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -91,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     const activities = rawActivities.slice(0, 21) // up to 21 for long trips (7 days × 3)
 
-    // ── Build day plans ───────────────────────────────────────────────────────
+    // Build day plans
     const today = new Date().toISOString().split('T')[0]
     const weekLater = new Date(Date.now() + 7 * 86_400_000).toISOString().split('T')[0]
     const startDate = travelDates?.start ?? today

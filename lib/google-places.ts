@@ -6,16 +6,14 @@
  * Legacy Places Text Search is kept as a last-resort fallback for activities only.
  */
 
-// ── Endpoints ─────────────────────────────────────────────────────────────────
-
+// Endpoints
 const LEGACY_TEXT_SEARCH  = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 const LEGACY_PHOTO_BASE   = "https://maps.googleapis.com/maps/api/place/photo"
 const GEOCODING_API       = "https://maps.googleapis.com/maps/api/geocode/json"
 const NEW_SEARCH_ENDPOINT = "https://places.googleapis.com/v1/places:searchText"
 const NEW_PHOTO_BASE      = "https://places.googleapis.com/v1"
 
-// ── Startup diagnostic (runs once on first module import) ─────────────────────
-
+// Startup diagnostic (runs once on first module import)
 let _startupDiagnosticPrinted = false
 function printStartupDiagnostic() {
   if (_startupDiagnosticPrinted) return
@@ -47,8 +45,7 @@ function printStartupDiagnostic() {
 
 printStartupDiagnostic()
 
-// ── Field masks ───────────────────────────────────────────────────────────────
-
+// Field masks
 const RESTAURANT_FIELD_MASK = [
   "places.displayName",
   "places.rating",
@@ -101,8 +98,7 @@ const TRANSIT_FIELD_MASK = [
   "places.regularOpeningHours",
 ].join(",")
 
-// ── Budget → price levels ─────────────────────────────────────────────────────
-
+// Budget → price levels
 const BUDGET_PRICE_LEVELS: Record<string, string[]> = {
   standard: ["PRICE_LEVEL_INEXPENSIVE", "PRICE_LEVEL_MODERATE"],
   premium:  ["PRICE_LEVEL_MODERATE",    "PRICE_LEVEL_EXPENSIVE"],
@@ -121,8 +117,7 @@ const HOTEL_BUDGET_QUALIFIER: Record<string, string> = {
   luxury:   "5-star luxury hotel resort",
 }
 
-// ── Price-level normalisation ─────────────────────────────────────────────────
-
+// Price-level normalisation
 function newPriceToTier(level: string | undefined): "budget" | "mid-range" | "luxury" {
   switch (level) {
     case "PRICE_LEVEL_FREE":
@@ -145,8 +140,7 @@ function newPriceToDisplay(level: string | undefined): string {
   }
 }
 
-// ── Photo URL helpers ─────────────────────────────────────────────────────────
-
+// Photo URL helpers
 function newPhotoUrl(photoName: string, key: string): string {
   return `${NEW_PHOTO_BASE}/${photoName}/media?maxWidthPx=400&key=${encodeURIComponent(key)}`
 }
@@ -155,8 +149,7 @@ function legacyPhotoUrl(ref: string, key: string): string {
   return `${LEGACY_PHOTO_BASE}?maxwidth=400&photoreference=${encodeURIComponent(ref)}&key=${key}`
 }
 
-// ── Raw response types ────────────────────────────────────────────────────────
-
+// Raw response types
 interface NewPlace {
   name?:                string
   displayName?:         { text: string; languageCode?: string }
@@ -191,8 +184,7 @@ interface RawLegacyPlace {
   types?:             string[]
 }
 
-// ── Normalised output types ───────────────────────────────────────────────────
-
+// Normalised output types
 export interface GooglePlaceHotel {
   name:             string
   rating:           number
@@ -246,8 +238,7 @@ export interface GoogleTransitHub {
   openHours?: string
 }
 
-// ── Core New Places API fetch ─────────────────────────────────────────────────
-
+// Core New Places API fetch
 async function newSearchPlaces(
   textQuery:    string,
   fieldMask:    string,
@@ -294,8 +285,7 @@ async function newSearchPlaces(
   }
 }
 
-// ── Legacy fallback fetch ─────────────────────────────────────────────────────
-
+// Legacy fallback fetch
 async function legacySearchPlaces(query: string, key: string): Promise<RawLegacyPlace[]> {
   try {
     const url = `${LEGACY_TEXT_SEARCH}?query=${encodeURIComponent(query)}&key=${key}`
@@ -312,8 +302,7 @@ async function legacySearchPlaces(query: string, key: string): Promise<RawLegacy
   }
 }
 
-// ── Geocoding helper ─────────────────────────────────────────────────────────
-
+// Geocoding helper
 export async function geocodeCity(address: string, key: string): Promise<{ city: string; country: string } | null> {
   try {
     const maskedKey = key ? `${key.slice(0, 12)}…` : "(empty)"
@@ -343,16 +332,14 @@ export async function geocodeCity(address: string, key: string): Promise<{ city:
   }
 }
 
-// ── Budget normalisation ──────────────────────────────────────────────────────
-
+// Budget normalisation
 function normalizeBudget(budget: string): "standard" | "premium" | "luxury" {
   if (budget === "budget" || budget === "low" || budget === "standard") return "standard"
   if (budget === "luxury") return "luxury"
   return "premium"
 }
 
-// ── Cuisine / Activity / Transit type extractors ──────────────────────────────
-
+// Cuisine / Activity / Transit type extractors
 function extractCuisine(types?: string[]): string {
   if (!types?.length) return "Local"
   const MAP: Record<string, string> = {
@@ -417,8 +404,7 @@ function extractTransitType(types?: string[]): string {
   return "Transit Hub"
 }
 
-// ── Public: fetchGoogleRestaurants (Places API New) — UNCHANGED ───────────────
-
+// Public: fetchGoogleRestaurants (Places API New) — UNCHANGED
 export async function fetchGoogleRestaurants(
   city:         string,
   budget:       string,
@@ -472,8 +458,7 @@ export async function fetchGoogleRestaurants(
   }))
 }
 
-// ── Public: fetchGoogleHotels (Places API NEW — was legacy) ───────────────────
-
+// Public: fetchGoogleHotels (Places API NEW — was legacy)
 export async function fetchGoogleHotels(
   city:   string,
   budget: string,
@@ -532,8 +517,7 @@ export async function fetchGoogleHotels(
   }))
 }
 
-// ── Public: fetchGoogleActivities (Places API New + multi-level fallback) ─────
-
+// Public: fetchGoogleActivities (Places API New + multi-level fallback)
 export async function fetchGoogleActivities(
   city:    string,
   country?: string,
@@ -634,8 +618,7 @@ function mapActivities(places: NewPlace[], city: string, key: string): GooglePla
     }))
 }
 
-// ── Public: fetchGoogleTransitHubs (Places API New) ──────────────────────────
-
+// Public: fetchGoogleTransitHubs (Places API New)
 export async function fetchGoogleTransitHubs(
   city:    string,
   country?: string,

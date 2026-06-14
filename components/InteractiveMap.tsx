@@ -5,8 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Loader2 } from "lucide-react"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface PlaceInput {
   name: string
   rating?: number
@@ -30,8 +29,7 @@ export interface InteractiveMapProps {
   attractions?: PlaceInput[]
 }
 
-// ── Hardcoded city coordinates — no external API needed ───────────────────────
-
+// Hardcoded city coordinates — no external API needed
 const KNOWN_CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   // Europe
   Paris: { lat: 48.8566, lng: 2.3522 },
@@ -207,8 +205,7 @@ function getCityCoords(name: string): { lat: number; lng: number } | null {
   return null
 }
 
-// ── Deterministic spread — each place gets a stable offset from city center ───
-
+// Deterministic spread — each place gets a stable offset from city center
 function deterministicOffset(seed: string, slot: number): { dlat: number; dlng: number } {
   // Simple hash of seed string
   let h = slot + 1
@@ -221,8 +218,7 @@ function deterministicOffset(seed: string, slot: number): { dlat: number; dlng: 
   return { dlat, dlng }
 }
 
-// ── Nominatim lightweight geocoder (free, OpenStreetMap-backed) ───────────────
-
+// Nominatim lightweight geocoder (free, OpenStreetMap-backed)
 const GEOCODE_LS_KEY = "travel_geocode_v1"
 
 function readGeocodeCache(): Record<string, { lat: number; lng: number }> {
@@ -265,8 +261,7 @@ async function geocodePlace(
   return null
 }
 
-// ── Leaflet loader — singleton promise so the script is added only once ───────
-
+// Leaflet loader — singleton promise so the script is added only once
 let leafletPromise: Promise<any> | null = null
 
 function loadLeaflet(): Promise<any> {
@@ -314,8 +309,7 @@ function loadLeaflet(): Promise<any> {
   return leafletPromise
 }
 
-// ── Marker helpers ────────────────────────────────────────────────────────────
-
+// Marker helpers
 const TYPE_COLOR: Record<string, string> = {
   hotel: "#3b82f6",
   restaurant: "#ef4444",
@@ -350,8 +344,7 @@ function buildPopup(place: ResolvedPlace): string {
   `
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-
+// Main component
 export function InteractiveMap({
   city,
   hotels,
@@ -502,7 +495,7 @@ export function InteractiveMap({
   const attractionCount = attractions.length
   const total = hotelCount + restaurantCount + attractionCount
 
-  // ── Error state ──────────────────────────────────────────────────────────────
+  // Error state
   if (mapError) {
     return (
       <Card className="border-2 border-destructive/40 p-6">
@@ -514,7 +507,7 @@ export function InteractiveMap({
     )
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // Render
   return (
     <Card className="border-2 overflow-hidden">
       {/* Header */}

@@ -59,7 +59,7 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
       ? singleModeContext
       : multiplayerContext;
 
-  // ── Category image state ────────────────────────────────────────────────────
+  // Category image state
   // For single mode: use context state so the grid survives tab switches.
   // Radix UI TabsContent unmounts inactive panels, destroying component-local state.
   // For multiplayer: use local state (no cross-tab persistence needed).
@@ -78,7 +78,7 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
       : setLocalCategoryImages
   ) as React.Dispatch<React.SetStateAction<Record<string, ImageItem[]>>>;
 
-  // ── Ephemeral per-mount state ───────────────────────────────────────────────
+  // Ephemeral per-mount state
   const [loadingCategories, setLoadingCategories] = useState<Record<string, boolean>>({});
   const [showMoreLoading,   setShowMoreLoading]   = useState<Record<string, boolean>>({});
   const [categoryErrors,    setCategoryErrors]    = useState<Record<string, string>>({});
@@ -95,7 +95,7 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
     { id: 'culture',    name: 'Culture',    icon: Landmark,        color: 'from-amber-400 to-amber-600'  },
   ];
 
-  // ── Feature 1: Load category images (initial or refresh) ───────────────────
+  // Feature 1: Load category images (initial or refresh)
   const generateCategoryImages = async (categoryId: string) => {
     if (loadingCategories[categoryId]) return;
     setLoadingCategories((prev) => ({ ...prev, [categoryId]: true }));
@@ -144,7 +144,7 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
     }
   };
 
-  // ── Feature 2: Show More — append without replacing ─────────────────────────
+  // Feature 2: Show More — append without replacing
   const showMoreCategoryImages = async (categoryId: string) => {
     if (showMoreLoading[categoryId] || loadingCategories[categoryId]) return;
     const existing = categoryImages[categoryId] ?? [];
@@ -190,7 +190,7 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
     }
   };
 
-  // ── Feature 3: Clear all selections without reloading ──────────────────────
+  // Feature 3: Clear all selections without reloading
   const clearSelection = () => {
     const totalSelected = Object.values(categoryImages)
       .flatMap((imgs) => imgs.filter((img) => img.selected)).length;
@@ -210,7 +210,7 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
     updatePreferences({ selectedImages: [], selectedImageMetadata: [] });
   };
 
-  // ── Toggle individual image selection ───────────────────────────────────────
+  // Toggle individual image selection
   const toggleImageSelection = (categoryId: string, imageIndex: number) => {
     setCategoryImages((prev) => {
       const category = prev[categoryId] || [];
@@ -220,7 +220,7 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
     });
   };
 
-  // ── Sync selected images → preferences (source of truth for /api/analyze) ──
+  // Sync selected images → preferences (source of truth for /api/analyze)
   // Fires whenever categoryImages changes (toggle, clear, append).
   // The JSON comparison prevents redundant updatePreferences calls.
   useEffect(() => {
@@ -262,11 +262,11 @@ export function ImageSelector({ mode = 'multiplayer' }: ImageSelectorProps) {
   // into the analyze payload. categoryImages now lives in the context for single mode,
   // so it persists naturally across tab switches without any restoration logic.
 
-  // ── Derived UI state ────────────────────────────────────────────────────────
+  // Derived UI state
   const totalSelected = Object.values(categoryImages)
     .flatMap((imgs) => imgs.filter((img) => img.selected)).length;
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // Render
   return (
     <Card className="border-2 bg-card/50 backdrop-blur-sm p-6 space-y-6">
       <div className="flex items-start justify-between gap-3">

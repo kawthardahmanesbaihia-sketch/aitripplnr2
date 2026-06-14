@@ -47,7 +47,7 @@ export default function HomePage() {
     <div className="relative overflow-hidden">
       <AnimatedBackgroundElements />
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
+      {/* HERO */}
       {/*
         Photography-first layout.
         No central card. Image is the primary visual element.
@@ -55,7 +55,7 @@ export default function HomePage() {
       */}
       <section className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
 
-        {/* ── Background image — Ken Burns cinematic effect ─────────────── */}
+        {/* Background image — Ken Burns cinematic effect */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
             className="absolute"
@@ -91,14 +91,14 @@ export default function HomePage() {
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
         </div>
 
-        {/* ── Subtle ambient teal glow ───────────────────────────────────── */}
+        {/* Subtle ambient teal glow */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/4 top-1/4 h-[480px] w-[480px] rounded-full bg-primary/10 blur-[160px]" />
           <div className="absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-[#18C6C8]/10 blur-[120px]" />
           <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[140px]" />
         </div>
 
-        {/* ── Floating parallax icons — atmospheric, never block the image ── */}
+        {/* Floating parallax icons — atmospheric, never block the image */}
         <motion.div
           className="pointer-events-none absolute left-[6%] top-[18%] hidden opacity-20 dark:opacity-15 sm:block"
           style={{ x: x1, y: y1 }}
@@ -127,7 +127,7 @@ export default function HomePage() {
           <Globe className="h-24 w-24 text-primary" />
         </motion.div>
 
-        {/* ── Bottom-center floating CTA ─────────────────────────────────── */}
+        {/* Bottom-center floating CTA */}
         {/*
           Minimal floating layout — no card, no heavy glassmorphism.
           Badge + compact headline + two action buttons.
@@ -250,7 +250,7 @@ export default function HomePage() {
 
       </section>
 
-      {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
+      {/* HOW IT WORKS */}
       <section className="relative bg-background px-4 py-24">
         <div className="container mx-auto max-w-6xl">
 
@@ -320,7 +320,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* ── Explore CTA banner ───────────────────────────────────────── */}
+          {/* Explore CTA banner */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

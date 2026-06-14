@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "
 import { Bookmark, ChevronLeft, ChevronRight, MapPin, ArrowUpRight } from "lucide-react"
 import { fetchCountryImages } from "@/lib/country-image-generator"
 
-// ── 9 cities per country ────────────────────────────────────────────────────
+// 9 cities per country
 const COUNTRY_CITIES: Record<string, string[]> = {
   Japan:                    ["Tokyo", "Kyoto", "Osaka", "Nara", "Hiroshima", "Sapporo", "Fukuoka", "Nagoya", "Okinawa"],
   France:                   ["Paris", "Nice", "Lyon", "Marseille", "Bordeaux", "Strasbourg", "Toulouse", "Nantes", "Cannes"],
@@ -104,7 +104,7 @@ interface DestinationHeroSectionProps {
   squadSelector?: React.ReactNode
 }
 
-// ── Standalone city card ────────────────────────────────────────────────────
+// Standalone city card
 interface CityCardProps {
   cityName: string
   countryName: string
@@ -248,7 +248,7 @@ function CityCard({
   )
 }
 
-// ── Main hero ───────────────────────────────────────────────────────────────
+// Main hero
 export function DestinationHeroSection({
   countries,
   selectedCountry,
@@ -284,7 +284,7 @@ export function DestinationHeroSection({
   const canForward = windowStart < maxStart
   const peekImage = cityImages[windowStart + WINDOW_SIZE] || active?.image || FALLBACK
 
-  // ── Navigation ─────────────────────────────────────────────────────────────
+  // Navigation
   const navigate = useCallback(
     (dir: 1 | -1) => {
       const next = dir === 1 ? Math.min(windowStart + 1, maxStart) : Math.max(windowStart - 1, 0)
@@ -299,7 +299,7 @@ export function DestinationHeroSection({
   const goForward = useCallback(() => navigate(1), [navigate])
   const goBack = useCallback(() => navigate(-1), [navigate])
 
-  // ── Image pre-fetch ─────────────────────────────────────────────────────────
+  // Image pre-fetch
   useEffect(() => {
     if (!active || fetchedRef.current === active.name) return
     fetchedRef.current = active.name
@@ -327,7 +327,7 @@ export function DestinationHeroSection({
     }
   }, [activeIndex, active])
 
-  // ── Wheel scroll on carousel area ──────────────────────────────────────────
+  // Wheel scroll on carousel area
   useEffect(() => {
     const el = carouselRef.current
     if (!el) return
@@ -343,7 +343,7 @@ export function DestinationHeroSection({
     return () => el.removeEventListener("wheel", onWheel)
   }, [navigate])
 
-  // ── Keyboard when hovering carousel ────────────────────────────────────────
+  // Keyboard when hovering carousel
   useEffect(() => {
     if (!isHovering) return
     const onKey = (e: KeyboardEvent) => {
@@ -354,7 +354,7 @@ export function DestinationHeroSection({
     return () => window.removeEventListener("keydown", onKey)
   }, [isHovering, goForward, goBack])
 
-  // ── Drag end handler ────────────────────────────────────────────────────────
+  // Drag end handler
   const onDragEnd = useCallback(
     (_: any, info: PanInfo) => {
       if (info.offset.x < -DRAG_THRESHOLD) goForward()
@@ -363,7 +363,7 @@ export function DestinationHeroSection({
     [goForward, goBack]
   )
 
-  // ── City card click ─────────────────────────────────────────────────────────
+  // City card click
   const handleCardClick = (indexInWindow: number) => {
     const absIdx = windowStart + indexInWindow
     if (indexInWindow === 0) {
@@ -603,7 +603,7 @@ export function DestinationHeroSection({
           )}
         </motion.div>
 
-        {/* ── Navigation controls ──────────────────────────────────────────── */}
+        {/* Navigation controls */}
         <div className="absolute bottom-8 left-8 flex items-center gap-3">
           {/* Back arrow */}
           <motion.button

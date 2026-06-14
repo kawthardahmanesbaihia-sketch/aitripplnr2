@@ -106,7 +106,7 @@ export default function AuthPage() {
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
 
-                {/* ── LOGIN ─────────────────────────────────────────────── */}
+                {/* LOGIN */}
                 <TabsContent value="login" className="space-y-4 mt-6">
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div>
@@ -144,7 +144,7 @@ export default function AuthPage() {
                   </form>
                 </TabsContent>
 
-                {/* ── SIGN UP ───────────────────────────────────────────── */}
+                {/* SIGN UP */}
                 <TabsContent value="signup" className="space-y-4 mt-6">
                   <form onSubmit={handleSignup} className="space-y-4">
                     {/* Account type */}

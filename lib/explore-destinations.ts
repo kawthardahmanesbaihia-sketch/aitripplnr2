@@ -11,7 +11,7 @@
  *   City Style     3%  →   6 pts max
  *   Architecture   3%  →   6 pts max
  *   Food           2%  →   4 pts max
- *   ─────────────────────────────────
+ *   ---
  *   Base total       196 pts
  *
  *   Landmark bonus   up to +35 pts  (if famous landmark detected + matches)
@@ -28,8 +28,7 @@
 
 import type { MergedTravelProfile } from "./travel-profile-merger"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 export interface CityHint {
   name: string
   tagline: string
@@ -68,7 +67,7 @@ export interface ExploreDestination {
   architectureIdentity: string[]
   culturalIdentity: string[]
   emotionalProfile: string[]
-  // ── New dimension fields (v2) ─────────────────────────────────────────────
+  // New dimension fields (v2)
   terrain: string[]       // terrain character: mountainous, coastal, rocky, desert, forested, island, volcanic, polar, flat
   cityStyle: string[]     // urban aesthetic: futuristic, modern, historic, traditional, old-town, skyscraper, mixed
   foodSignals: string[]   // food culture: seafood, street-food, fine-dining, local-cuisine, asian-cuisine, mediterranean, spiced, grilled, tropical-fruits
@@ -104,8 +103,7 @@ export interface RankedDestination {
   scoreBreakdown: ScoreBreakdown
 }
 
-// ── Destination data ──────────────────────────────────────────────────────────
-
+// Destination data
 export const EXPLORE_DESTINATIONS: Record<string, ExploreDestination> = {
   japan: {
     id: "japan",
@@ -1668,8 +1666,7 @@ export const EXPLORE_DESTINATIONS: Record<string, ExploreDestination> = {
     landmarkKeys: ["cliffs of moher", "ireland green cliffs", "giant's causeway", "basalt columns northern ireland", "ring of kerry", "skellig michael ireland"],
   },
 
-  // ── Expansion: 50 new destinations ───────────────────────────────────────────
-
+  // Expansion: 50 new destinations
   denmark: {
     id: "denmark", name: "Denmark", flag: "🇩🇰",
     heroImage: "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=1600&q=80",
@@ -2874,8 +2871,7 @@ export const EXPLORE_DESTINATIONS: Record<string, ExploreDestination> = {
   },
 }
 
-// ── Country hint → destination ID mapping (for landmark matching) ─────────────
-
+// Country hint → destination ID mapping (for landmark matching)
 const COUNTRY_HINT_TO_DEST: Record<string, string> = {
   "japan": "japan", "japanese": "japan", "nippon": "japan",
   "france": "france", "french": "france",
@@ -2967,8 +2963,7 @@ const COUNTRY_HINT_TO_DEST: Record<string, string> = {
   "hong kong": "hongkong", "hongkong": "hongkong", "hk": "hongkong",
 }
 
-// ── Region → destination mapping ──────────────────────────────────────────────
-
+// Region → destination mapping
 const REGION_TO_DESTINATIONS: Record<string, string[]> = {
   "Mediterranean":      ["greece", "france", "italy", "spain", "croatia", "portugal", "lebanon", "tunisia"],
   "Western Europe":     ["france", "spain", "italy", "switzerland", "ireland", "belgium", "germany", "netherlands", "portugal", "unitedkingdom"],
@@ -3003,8 +2998,7 @@ const REGION_TO_DESTINATIONS: Record<string, string[]> = {
   "Himalayas":          ["nepal", "bhutan", "india"],
 }
 
-// ── Scoring helpers ───────────────────────────────────────────────────────────
-
+// Scoring helpers
 function countTotal(map: Record<string, number>): number {
   return Object.values(map).reduce((s, c) => s + c, 0)
 }
@@ -3062,8 +3056,7 @@ function budgetMultiplier(
   }
 }
 
-// ── Environment group definitions for contradiction penalties ────────────────
-
+// Environment group definitions for contradiction penalties
 const DESERT_ENVS   = ["desert", "dunes", "sandy", "arid", "dry", "canyon", "wadi", "sahara", "steppe"]
 const BEACH_ENVS    = ["beach", "ocean", "coastal", "island", "turquoise-water", "shore", "lagoon", "coral", "atoll"]
 const MOUNTAIN_ENVS = ["mountain", "alpine", "glacier", "snow", "tundra", "peak", "fjord", "cliff", "highland"]
@@ -3123,8 +3116,7 @@ function penaltyScore(profile: MergedTravelProfile, dest: ExploreDestination): n
   return Math.min(penalty, 55)
 }
 
-// ── Landmark matching ─────────────────────────────────────────────────────────
-
+// Landmark matching
 /**
  * Resolve a Gemini country-hint string to a destination ID.
  * Handles: exact matches, partial substring, and multi-word names ("South Africa").
@@ -3169,8 +3161,7 @@ function landmarkBonus(
   return 0
 }
 
-// ── Main ranking function ─────────────────────────────────────────────────────
-
+// Main ranking function
 export function rankDestinations(
   profile: MergedTravelProfile,
   topN: number = Object.keys(EXPLORE_DESTINATIONS).length
@@ -3178,39 +3169,39 @@ export function rankDestinations(
   const results: RankedDestination[] = []
 
   for (const dest of Object.values(EXPLORE_DESTINATIONS)) {
-    // ── 1. Environment overlap  (30% → max 60 pts) ────────────────────────
+    // 1. Environment overlap  (30% → max 60 pts)
     const envScore = fuzzyOverlapScore(profile.environmentTypes ?? {}, dest.environmentTypes, 60)
 
-    // ── 2. Activities overlap   (20% → max 40 pts) ────────────────────────
+    // 2. Activities overlap   (20% → max 40 pts)
     const actScore = overlapScore(profile.activities, dest.activities, 40)
 
-    // ── 3. Climate overlap      (15% → max 30 pts) ────────────────────────
+    // 3. Climate overlap      (15% → max 30 pts)
     const climScore = overlapScore(profile.climatePreference, dest.climates, 30)
 
-    // ── 4. Travel style overlap (10% → max 20 pts) ────────────────────────
+    // 4. Travel style overlap (10% → max 20 pts)
     const styleScore = overlapScore(profile.travelStyles, dest.travelStyles, 20)
 
-    // ── 5. Mood / atmosphere    (10% → max 20 pts) ────────────────────────
+    // 5. Mood / atmosphere    (10% → max 20 pts)
     // Use combined mood map (atmosphere + explicit mood from new prompt)
     const moodMap  = profile.mood && countTotal(profile.mood) > 0 ? profile.mood : profile.atmosphere
     const moodScore = fuzzyOverlapScore(moodMap ?? {}, dest.atmosphereTags, 20)
 
-    // ── 6. Terrain overlap       (5% → max 10 pts) ────────────────────────
+    // 6. Terrain overlap       (5% → max 10 pts)
     const terrainScore = fuzzyOverlapScore(profile.terrain ?? {}, dest.terrain, 10)
 
-    // ── 7. City style overlap    (3% → max  6 pts) ────────────────────────
+    // 7. City style overlap    (3% → max  6 pts)
     const cityStyleScore = fuzzyOverlapScore(profile.cityStyle ?? {}, dest.cityStyle, 6)
 
-    // ── 8. Architecture overlap  (3% → max  6 pts) ────────────────────────
+    // 8. Architecture overlap  (3% → max  6 pts)
     const archScore = fuzzyOverlapScore(profile.architectureStyle ?? {}, dest.architectureIdentity, 6)
 
-    // ── 9. Food signals overlap  (2% → max  4 pts) ────────────────────────
+    // 9. Food signals overlap  (2% → max  4 pts)
     const foodScore = fuzzyOverlapScore(profile.foodSignals ?? {}, dest.foodSignals, 4)
 
-    // ── 10. Landmark bonus (up to +35 pts) ────────────────────────────────
+    // 10. Landmark bonus (up to +35 pts)
     const lmBonus = landmarkBonus(profile, dest)
 
-    // ── 11. Region affinity bonus (up to +9 pts) ──────────────────────────
+    // 11. Region affinity bonus (up to +9 pts)
     const regionTotal = countTotal(profile.possibleRegions ?? {})
     let regionScore = 0
     if (regionTotal > 0) {
@@ -3221,13 +3212,13 @@ export function rankDestinations(
       regionScore = (matched / regionTotal) * 9
     }
 
-    // ── 12. Cultural context match (up to +10 pts) ────────────────────────
+    // 12. Cultural context match (up to +10 pts)
     const cultureScore = fuzzyOverlapScore(profile.culturalContext ?? {}, dest.culturalIdentity, 10)
 
-    // ── 13. Emotional vibe match (up to +5 pts) ───────────────────────────
+    // 13. Emotional vibe match (up to +5 pts)
     const emotionScore = fuzzyOverlapScore(profile.emotionalVibe ?? {}, dest.emotionalProfile, 5)
 
-    // ── 14. Numeric behavior match (up to +12 pts) ────────────────────────
+    // 14. Numeric behavior match (up to +12 pts)
     // Simplified 3-dimension match: luxury, romance, adventure
     const numDims: [number, number][] = [
       [profile.luxuryLevel,     dest.scores.luxury],
@@ -3242,19 +3233,19 @@ export function rankDestinations(
     }
     numericScore = Math.min(numericScore, 12)
 
-    // ── 15. Family-friendly bonus ─────────────────────────────────────────
+    // 15. Family-friendly bonus
     const famBonus = (profile.familyFriendly && dest.scores.family > 72) ? 6 : 0
 
-    // ── 16. Assemble base score ───────────────────────────────────────────
+    // 16. Assemble base score
     let score = envScore + actScore + climScore + styleScore + moodScore
               + terrainScore + cityStyleScore + archScore + foodScore
               + lmBonus + regionScore + cultureScore + emotionScore
               + numericScore + famBonus
 
-    // ── 17. Budget multiplier ─────────────────────────────────────────────
+    // 17. Budget multiplier
     score *= budgetMultiplier(profile.budgetLevel, dest.scores.budget)
 
-    // ── 18. Contradiction penalty ─────────────────────────────────────────
+    // 18. Contradiction penalty
     const penalty = penaltyScore(profile, dest)
     score -= penalty
 
@@ -3290,8 +3281,7 @@ export function rankDestinations(
     .slice(0, topN)
 }
 
-// ── Explanation generator ─────────────────────────────────────────────────────
-
+// Explanation generator
 function topKey(map: Record<string, number>): string {
   return Object.entries(map).sort(([, a], [, b]) => b - a)[0]?.[0] ?? ""
 }
@@ -3383,8 +3373,7 @@ function generateExplanation(
   return reasons.slice(0, 4)
 }
 
-// ── Utility exports ───────────────────────────────────────────────────────────
-
+// Utility exports
 export function extractProfileVibes(profile: MergedTravelProfile): string[] {
   const byFreq = (map: Record<string, number>) =>
     Object.entries(map).sort(([, a], [, b]) => b - a).map(([k]) => k)

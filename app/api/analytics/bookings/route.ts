@@ -5,8 +5,7 @@ import { requireAuth } from "@/lib/auth"
 
 export const dynamic = "force-dynamic"
 
-// ── Row interfaces ─────────────────────────────────────────────────────────────
-
+// Row interfaces
 interface KpiRow extends RowDataPacket {
   total:            number | bigint
   accepted:         number | bigint
@@ -44,8 +43,7 @@ interface ConversionRow extends RowDataPacket {
   acceptance_rate: number | string
 }
 
-// ── GET /api/analytics/bookings ───────────────────────────────────────────────
-
+// GET /api/analytics/bookings
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth

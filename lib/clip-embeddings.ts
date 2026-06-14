@@ -26,8 +26,7 @@ import {
   env,
 } from "@xenova/transformers"
 
-// ── Config ────────────────────────────────────────────────────────────────────
-
+// Config
 const MODEL     = "Xenova/clip-vit-base-patch32"
 const DIM       = 512
 const TXT_BATCH = 64   // phrases per text-encoder forward pass
@@ -35,8 +34,7 @@ const TXT_BATCH = 64   // phrases per text-encoder forward pass
 env.allowRemoteModels = true
 env.cacheDir = process.env.TRANSFORMERS_CACHE ?? "./.cache/transformers"
 
-// ── Model singletons ──────────────────────────────────────────────────────────
-
+// Model singletons
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _tokenizer: any  = null
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,8 +45,7 @@ let _processor: any  = null
 let _visionModel: any = null
 let _modelsPromise: Promise<void> | null = null
 
-// ── Precomputed matrices ──────────────────────────────────────────────────────
-
+// Precomputed matrices
 let _phraseMatrix: Float32Array | null = null     // [N_phrases × DIM] row-major
 let _phraseList: string[]              = []        // phrase at row i
 const _phraseIndexMap                  = new Map<string, number>()  // phrase → row
@@ -62,8 +59,7 @@ let _embeddingsReady  = false
 let _precompPromise: Promise<void> | null = null
 let _startupMs = 0
 
-// ── Model loading ─────────────────────────────────────────────────────────────
-
+// Model loading
 async function loadModels(): Promise<void> {
   const t0 = Date.now()
   console.log("[CLIP-Embed] Loading text + vision encoders…")
@@ -81,8 +77,7 @@ export async function ensureModels(): Promise<void> {
   await _modelsPromise
 }
 
-// ── Math utilities ────────────────────────────────────────────────────────────
-
+// Math utilities
 function l2normalize(v: Float32Array): Float32Array {
   let norm = 0
   for (let i = 0; i < v.length; i++) norm += v[i] * v[i]
@@ -112,8 +107,7 @@ export function batchDotProduct(
   return scores
 }
 
-// ── Startup: precompute all phrase + centroid embeddings ──────────────────────
-
+// Startup: precompute all phrase + centroid embeddings
 /**
  * Build phrase matrix and centroid matrix at process startup.
  * Safe to call multiple times — runs only once.
@@ -132,7 +126,7 @@ export async function precomputeEmbeddings(
     const t0 = Date.now()
     await ensureModels()
 
-    // ── 1. Phrase matrix ────────────────────────────────────────────────────
+    // 1. Phrase matrix
     console.log(`[CLIP-Embed] Precomputing ${phrases.length} phrase embeddings in batches of ${TXT_BATCH}…`)
     _phraseList   = phrases
     _phraseMatrix = new Float32Array(phrases.length * DIM)
@@ -158,7 +152,7 @@ export async function precomputeEmbeddings(
     }
     console.log()  // newline after progress
 
-    // ── 2. Centroid matrix ──────────────────────────────────────────────────
+    // 2. Centroid matrix
     const destIds = Object.keys(destPhraseMap)
     _destList = destIds
     destIds.forEach((id, i) => _destIndexMap.set(id, i))
@@ -205,8 +199,7 @@ export async function precomputeEmbeddings(
   await _precompPromise
 }
 
-// ── Per-request: image embedding ──────────────────────────────────────────────
-
+// Per-request: image embedding
 /**
  * Encode one image → normalized 512-dim embedding.
  * This is the ONLY model forward pass during a request.
@@ -256,8 +249,7 @@ export async function computeImageEmbedding(imageUrl: string): Promise<Float32Ar
   return emb
 }
 
-// ── Per-request: phrase similarity ────────────────────────────────────────────
-
+// Per-request: phrase similarity
 /**
  * Compute cosine similarity between imageEmb and every phrase embedding.
  * Returns Float32Array of length N_phrases — indexed identically to getPhraseList().
@@ -271,8 +263,7 @@ export function allPhraseScores(imageEmb: Float32Array): Float32Array {
   return scores
 }
 
-// ── Stage 1: centroid ranking ─────────────────────────────────────────────────
-
+// Stage 1: centroid ranking
 /**
  * Rank all destinations by centroid cosine similarity.
  * Returns top-K results sorted descending.
@@ -295,8 +286,7 @@ export function centroidRanking(
   return ranked.slice(0, topK)
 }
 
-// ── Accessors ─────────────────────────────────────────────────────────────────
-
+// Accessors
 export function getPhraseList(): string[]                { return _phraseList }
 export function getPhraseIndex(p: string): number        { return _phraseIndexMap.get(p) ?? -1 }
 export function getDestPhraseIndices(d: string): number[]{ return _destPhraseIndices.get(d) ?? [] }

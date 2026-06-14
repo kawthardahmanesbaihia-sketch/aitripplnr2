@@ -8,8 +8,7 @@ import {
 } from "lucide-react";
 import { SQUAD_LABELS, type SquadType } from "@/lib/travel-data";
 
-// ── Types (unchanged) ─────────────────────────────────────────────────────────
-
+// Types (unchanged)
 type FlowState = "upload" | "analyzing";
 
 interface UploadedImage {
@@ -18,8 +17,7 @@ interface UploadedImage {
   preview: string;
 }
 
-// ── Constants (unchanged) ─────────────────────────────────────────────────────
-
+// Constants (unchanged)
 const SQUAD_OPTIONS: { id: SquadType; label: string; emoji: string; description: string; gradient: string; glow: string }[] = [
   { id: "solo",    label: "Solo",    emoji: "👤", description: "Just me and the world",      gradient: "from-violet-500 via-purple-500 to-indigo-600",   glow: "shadow-violet-500/40" },
   { id: "couple",  label: "Couple",  emoji: "💑", description: "A journey for two",          gradient: "from-rose-500 via-pink-500 to-red-500",         glow: "shadow-rose-500/40" },
@@ -41,8 +39,7 @@ const HINT_CARDS = [
   { emoji: "🍜", title: "Food & Culture", hint: "Cuisines, markets, architecture" },
 ];
 
-// ── Helpers (unchanged) ───────────────────────────────────────────────────────
-
+// Helpers (unchanged)
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -67,8 +64,7 @@ function resizeDataUrl(dataUrl: string, maxDim = 800): Promise<string> {
   });
 }
 
-// ── Floating orb background ───────────────────────────────────────────────────
-
+// Floating orb background
 const ORBS = [
   { color: "from-emerald-500/20 to-teal-500/20",    w: "w-[600px] h-[600px]", pos: "-top-40 -left-40",     dur: 12 },
   { color: "from-violet-500/15 to-purple-500/15",   w: "w-[500px] h-[500px]", pos: "top-1/3 -right-48",    dur: 16 },
@@ -91,14 +87,13 @@ function FloatingOrbs() {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
+// Page
 export default function ExplorePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
-  // ── State (logic unchanged) ──────────────────────────────────────────────────
+  // State (logic unchanged)
   const [flowState, setFlowState] = useState<FlowState>("upload");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [squad, setSquad] = useState<SquadType | null>(null);
@@ -106,8 +101,7 @@ export default function ExplorePage() {
   const [analyzeMsg, setAnalyzeMsg] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Handlers (logic unchanged) ───────────────────────────────────────────────
-
+  // Handlers (logic unchanged)
   const addFiles = useCallback(async (files: File[]) => {
     const imageFiles = files.filter(f => f.type.startsWith("image/")).slice(0, 5 - images.length);
     if (!imageFiles.length) return;
@@ -180,8 +174,7 @@ export default function ExplorePage() {
 
   const canDiscover = images.length > 0 && !!squad;
 
-  // ── Render ────────────────────────────────────────────────────────────────────
-
+  // Render
   return (
     <div className="min-h-screen bg-background relative">
 
@@ -307,7 +300,7 @@ export default function ExplorePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.3 } }}
           >
-            {/* ── Cinematic Hero ── */}
+            {/* Cinematic Hero */}
             <div className="relative overflow-hidden min-h-[72vh] flex flex-col items-center justify-center"
               style={{ background: "linear-gradient(135deg, #0a1628 0%, #0d2137 40%, #091a1a 70%, #040d12 100%)" }}
             >
@@ -405,7 +398,7 @@ export default function ExplorePage() {
               </div>
             </div>
 
-            {/* ── Main Form Card ── */}
+            {/* Main Form Card */}
             <div className="relative max-w-2xl mx-auto px-4 -mt-10 pb-20 z-10">
               <motion.div
                 initial={{ opacity: 0, y: 32 }}
@@ -415,7 +408,7 @@ export default function ExplorePage() {
                 style={{ background: "var(--card)" }}
               >
 
-                {/* ── Step 1: Upload ── */}
+                {/* Step 1: Upload */}
                 <div className="p-7 md:p-9 border-b border-border/60">
                   {/* Step header */}
                   <div className="flex items-center gap-4 mb-4">
@@ -585,7 +578,7 @@ export default function ExplorePage() {
                   </motion.div>
                 </div>
 
-                {/* ── Step 2: Squad ── */}
+                {/* Step 2: Squad */}
                 <div className="p-7 md:p-9 border-b border-border/60">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="relative flex-shrink-0">
@@ -658,7 +651,7 @@ export default function ExplorePage() {
                   </div>
                 </div>
 
-                {/* ── Step 3: CTA ── */}
+                {/* Step 3: CTA */}
                 <div className="p-7 md:p-9">
                   <AnimatePresence mode="wait">
                     {error && (

@@ -14,8 +14,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Image as ImageIcon } from "lucide-react"
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
+// Constants
 const AVAILABLE_TAGS = [
   "beach", "mountain", "nature", "adventure", "hiking", "relax",
   "luxury", "urban", "culture", "traditional", "modern", "night",
@@ -41,8 +40,7 @@ const STATUS_OPTIONS = [
   { value: "featured", label: "Featured", hint: "Highlighted on listings" },
 ] as const
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
+// Types
 export interface PackageFormValues {
   title:            string
   destination:      string
@@ -73,8 +71,7 @@ export interface PackageFormProps {
   cancelHref:      string
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
+// Component
 export function PackageForm({
   initialValues,
   onSubmit,
@@ -119,7 +116,7 @@ export function PackageForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      {/* ── Basic Information ─────────────────────────────────────────── */}
+      {/* Basic Information */}
       <Card className="p-6">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">
           Basic Information
@@ -200,7 +197,7 @@ export function PackageForm({
         </div>
       </Card>
 
-      {/* ── Image ─────────────────────────────────────────────────────── */}
+      {/* Image */}
       <Card className="p-6">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">
           Package Image
@@ -244,7 +241,7 @@ export function PackageForm({
         )}
       </Card>
 
-      {/* ── Description & Services ────────────────────────────────────── */}
+      {/* Description & Services */}
       <Card className="p-6">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">
           Description & Services
@@ -286,7 +283,7 @@ export function PackageForm({
         </div>
       </Card>
 
-      {/* ── Tags ──────────────────────────────────────────────────────── */}
+      {/* Tags */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-5">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -318,7 +315,7 @@ export function PackageForm({
         )}
       </Card>
 
-      {/* ── Contact ───────────────────────────────────────────────────── */}
+      {/* Contact */}
       <Card className="p-6">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">
           Contact <span className="normal-case font-normal">(optional)</span>
@@ -347,7 +344,7 @@ export function PackageForm({
         </div>
       </Card>
 
-      {/* ── Actions ───────────────────────────────────────────────────── */}
+      {/* Actions */}
       <div className="flex gap-3 pb-6">
         <Button
           type="submit"

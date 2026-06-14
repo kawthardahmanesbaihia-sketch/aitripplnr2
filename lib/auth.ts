@@ -2,8 +2,7 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose"
 import { cookies } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
+// Constants
 const COOKIE_NAME  = "auth_token"
 const JWT_EXPIRY   = "7d"
 const MAX_AGE_SECS = 7 * 24 * 60 * 60 // 7 days
@@ -16,16 +15,14 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(secret)
 }
 
-// ── Token payload ──────────────────────────────────────────────────────────────
-
+// Token payload
 export interface AuthPayload {
   userId: number
   role:   "user" | "agency"
   email:  string
 }
 
-// ── Sign ───────────────────────────────────────────────────────────────────────
-
+// Sign
 export async function signToken(payload: AuthPayload): Promise<string> {
   return new SignJWT({ ...payload } as unknown as JWTPayload)
     .setProtectedHeader({ alg: "HS256" })
@@ -34,8 +31,7 @@ export async function signToken(payload: AuthPayload): Promise<string> {
     .sign(getSecret())
 }
 
-// ── Verify ─────────────────────────────────────────────────────────────────────
-
+// Verify
 export async function verifyToken(token: string): Promise<AuthPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret())
@@ -49,8 +45,7 @@ export async function verifyToken(token: string): Promise<AuthPayload | null> {
   }
 }
 
-// ── Cookie helpers ─────────────────────────────────────────────────────────────
-
+// Cookie helpers
 const isProduction = process.env.NODE_ENV === "production"
 
 function cookieAttributes(maxAge: number): string {
@@ -81,7 +76,7 @@ export function clearAuthCookie(res: NextResponse): NextResponse {
   return res
 }
 
-// ── getCurrentUser ─────────────────────────────────────────────────────────────
+// getCurrentUser
 // Pass the NextRequest object when calling from an API route.
 // Call without arguments from a Server Component (uses next/headers).
 
@@ -103,8 +98,7 @@ export async function getCurrentUser(req?: NextRequest): Promise<AuthPayload | n
   return verifyToken(token)
 }
 
-// ── Convenience: require auth or return 401 ────────────────────────────────────
-
+// Convenience: require auth or return 401
 export async function requireAuth(
   req: NextRequest
 ): Promise<{ user: AuthPayload } | NextResponse> {

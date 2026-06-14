@@ -43,11 +43,10 @@ import {
   isEmbeddingsReady,
 } from "./clip-embeddings"
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
+// Constants
 const TOP_CENTROID_CANDIDATES = 20   // stage-1: keep this many destinations for full scoring
 
-// ── Flat dest-phrase map (built once at module load) ──────────────────────────
+// Flat dest-phrase map (built once at module load)
 // Used by precomputeEmbeddings to build per-destination phrase lists.
 
 const DEST_PHRASE_MAP: Record<string, string[]> = {}
@@ -59,8 +58,7 @@ for (const [destId, categories] of Object.entries(DEST_CATEGORY_CONCEPTS)) {
 
 const ALL_DEST_IDS = Object.keys(DEST_CATEGORY_CONCEPTS)
 
-// ── Startup: trigger precomputation ──────────────────────────────────────────
-
+// Startup: trigger precomputation
 let _startupLogged = false
 
 function logStartupDiagnostics(): void {
@@ -100,8 +98,7 @@ export async function prewarmTextEmbeddings(): Promise<void> {
   console.log(`[Performance] Embedding cache: ${stats.phraseCount} phrases, ${stats.centroidCount} centroids, ${stats.matrixMB.toFixed(1)} MB`)
 }
 
-// ── Squad bonus table ─────────────────────────────────────────────────────────
-
+// Squad bonus table
 const SQUAD_BONUS: Record<string, Record<string, number>> = {
   solo: {
     japan: 4, vietnam: 4, morocco: 3, thailand: 3, india: 3, bali: 2, greece: 2, spain: 2,
@@ -136,8 +133,7 @@ const SQUAD_BONUS: Record<string, Record<string, number>> = {
   },
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface CategoryScore {
   category:       string
   rawScore:       number
@@ -156,20 +152,19 @@ interface PerImageScores {
   imageUrl:             string
 }
 
-// ── Per-image semantic scoring ────────────────────────────────────────────────
-
+// Per-image semantic scoring
 async function scoreOneImage(imageUrl: string): Promise<PerImageScores> {
   const tTotal = Date.now()
 
-  // ── Image embedding (ONE vision-encoder call per image) ───────────────────
+  // Image embedding (ONE vision-encoder call per image)
   const imageEmb = await computeImageEmbedding(imageUrl)
 
-  // ── Full phrase similarity (vectorized; no text-encoder calls) ────────────
+  // Full phrase similarity (vectorized; no text-encoder calls)
   const tSim = Date.now()
   const phraseScores = allPhraseScores(imageEmb)  // Float32Array[N_phrases]
   const phraseList   = getPhraseList()
 
-  // ── Build top-30 LabelScore[] for geo-reasoning ───────────────────────────
+  // Build top-30 LabelScore[] for geo-reasoning
   // Partial selection avoids allocating + sorting a full 5031-entry array.
   const tGeo = Date.now()
   const TOP_GEO = 30
@@ -198,13 +193,13 @@ async function scoreOneImage(imageUrl: string): Promise<PerImageScores> {
   top30.sort((a, b) => b.score - a.score)  // descending for geo-reasoning
   console.log(`[Timing] Top-30 extraction: ${Date.now() - tGeo}ms`)
 
-  // ── Stage 1: Centroid ranking → candidate set ─────────────────────────────
+  // Stage 1: Centroid ranking → candidate set
   const tCentroid = Date.now()
   const topCandidates = centroidRanking(imageEmb, TOP_CENTROID_CANDIDATES)
   const candidateSet  = new Set(topCandidates.map(c => c.destId))
   console.log(`[Timing] Centroid ranking: ${Date.now() - tCentroid}ms | candidates: ${candidateSet.size}`)
 
-  // ── Stage 2: Category-weighted scoring (finalists only) ───────────────────
+  // Stage 2: Category-weighted scoring (finalists only)
   const tScore = Date.now()
   const destScores: Record<string, number> = {}
   const destCategoryScores: Record<string, Record<string, CategoryScore>> = {}
@@ -253,7 +248,7 @@ async function scoreOneImage(imageUrl: string): Promise<PerImageScores> {
   }
   console.log(`[Timing] Category scoring (${candidateSet.size}/${ALL_DEST_IDS.length} dests): ${Date.now() - tScore}ms`)
 
-  // ── Global category scores (mean across candidate dests) ──────────────────
+  // Global category scores (mean across candidate dests)
   const globalCategoryScores: Record<string, number> = {}
   const catAccum: Record<string, { sum: number; count: number }> = {}
 
@@ -268,7 +263,7 @@ async function scoreOneImage(imageUrl: string): Promise<PerImageScores> {
     globalCategoryScores[cat] = acc.count > 0 ? acc.sum / acc.count : 0
   }
 
-  // ── Detect activated categories ───────────────────────────────────────────
+  // Detect activated categories
   const catValues = Object.values(globalCategoryScores)
   const catMean   = catValues.reduce((a, b) => a + b, 0) / Math.max(catValues.length, 1)
   const ACTIVATION_THRESHOLD = catMean * 1.8
@@ -278,7 +273,7 @@ async function scoreOneImage(imageUrl: string): Promise<PerImageScores> {
     .sort(([, a], [, b]) => b - a)
     .map(([cat]) => cat)
 
-  // ── Contradiction suppression ─────────────────────────────────────────────
+  // Contradiction suppression
   const catRankMap: Record<string, number> = {}
   activatedCategories.forEach((cat, i) => { catRankMap[cat] = i })
 
@@ -299,7 +294,7 @@ async function scoreOneImage(imageUrl: string): Promise<PerImageScores> {
     }
   }
 
-  // ── Structured logs ───────────────────────────────────────────────────────
+  // Structured logs
   const top10 = top30.slice(0, 10).map(ls => `"${ls.label.substring(0, 45)}"(${ls.score.toFixed(4)})`)
   console.log(`[CLIP] Top-10: ${top10.join(" | ")}`)
 
@@ -327,8 +322,7 @@ async function scoreOneImage(imageUrl: string): Promise<PerImageScores> {
   }
 }
 
-// ── Geographic reasoning ──────────────────────────────────────────────────────
-
+// Geographic reasoning
 function applyReasoningToImage(pi: PerImageScores): ReasoningResult {
   const reasoning = applyGeographicReasoning(pi.destScores, pi.rawLabelScores, ALL_DEST_IDS)
 
@@ -345,8 +339,7 @@ function applyReasoningToImage(pi: PerImageScores): ReasoningResult {
   return reasoning
 }
 
-// ── Multi-image aggregation ───────────────────────────────────────────────────
-
+// Multi-image aggregation
 function aggregateScores(perImage: PerImageScores[]): Record<string, number> {
   const totals: Record<string, number> = {}
   let totalWeight = 0
@@ -362,8 +355,7 @@ function aggregateScores(perImage: PerImageScores[]): Record<string, number> {
   return totals
 }
 
-// ── Score normalisation ───────────────────────────────────────────────────────
-
+// Score normalisation
 function normaliseScores(raw: Record<string, number>): Record<string, number> {
   const values = Object.values(raw)
   const max    = Math.max(...values)
@@ -376,8 +368,7 @@ function normaliseScores(raw: Record<string, number>): Record<string, number> {
   return out
 }
 
-// ── Confidence ────────────────────────────────────────────────────────────────
-
+// Confidence
 function computeConfidence(ranked: { score: number }[]): number {
   const top    = ranked[0]?.score ?? 0
   const second = ranked[1]?.score ?? 0
@@ -385,8 +376,7 @@ function computeConfidence(ranked: { score: number }[]): number {
   return Math.round(Math.min(96, Math.max(55, top * 0.72 + gap * 0.5)))
 }
 
-// ── Explanation bullets ───────────────────────────────────────────────────────
-
+// Explanation bullets
 function buildExplanation(
   destId: string,
   perImage: PerImageScores[],
@@ -438,8 +428,7 @@ function buildExplanation(
   return bullets.slice(0, 4)
 }
 
-// ── Vibes extraction ──────────────────────────────────────────────────────────
-
+// Vibes extraction
 function extractVibes(perImage: PerImageScores[], topDestId: string): string[] {
   const catCount: Record<string, number> = {}
   for (const pi of perImage) {
@@ -478,8 +467,7 @@ function extractVibes(perImage: PerImageScores[], topDestId: string): string[] {
   return vibes
 }
 
-// ── Confidence log ────────────────────────────────────────────────────────────
-
+// Confidence log
 function logConfidenceDebug(ranked: RankedDestination[], confidence: number): void {
   console.log(`\n[Confidence]`)
   console.log(`  Final confidence: ${confidence}%`)
@@ -488,8 +476,7 @@ function logConfidenceDebug(ranked: RankedDestination[], confidence: number): vo
   console.log(`  Score gap #1–#2: ${gap.toFixed(1)} pts`)
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
-
+// Main export
 export interface CLIPRankingResult {
   ranked:       RankedDestination[]
   confidence:   number
@@ -512,18 +499,18 @@ export async function rankDestinationsByCLIP(
     await prewarmTextEmbeddings()
   }
 
-  // ── Score all images in parallel (vision encoder calls are independent) ────
+  // Score all images in parallel (vision encoder calls are independent)
   const tEmbed = Date.now()
   const perImageResults = await Promise.all(urls.map(scoreOneImage))
   console.log(`[Timing] All images (parallel): ${Date.now() - tEmbed}ms`)
 
-  // ── Geographic reasoning ──────────────────────────────────────────────────
+  // Geographic reasoning
   const tReason = Date.now()
   const reasoningResults: ReasoningResult[] = perImageResults.map(pi => applyReasoningToImage(pi))
   logReasoningDebug(reasoningResults, urls.length)
   console.log(`[Timing] Geographic reasoning total: ${Date.now() - tReason}ms`)
 
-  // ── Aggregate ─────────────────────────────────────────────────────────────
+  // Aggregate
   const tAgg = Date.now()
   const aggregated = aggregateScores(perImageResults)
   console.log(`[Timing] Aggregation: ${Date.now() - tAgg}ms`)
@@ -534,17 +521,17 @@ export async function rankDestinationsByCLIP(
     .map(([id, s]) => `${id}=${s.toFixed(5)}`)
   console.log(`[CLIP-scorer] Aggregated top-8: ${topAgg.join(" | ")}`)
 
-  // ── Normalise ─────────────────────────────────────────────────────────────
+  // Normalise
   const normalised = normaliseScores(aggregated)
 
-  // ── Squad bonus ───────────────────────────────────────────────────────────
+  // Squad bonus
   if (squad && SQUAD_BONUS[squad]) {
     for (const destId of Object.keys(normalised)) {
       normalised[destId] += SQUAD_BONUS[squad][destId] ?? 0
     }
   }
 
-  // ── Build final ranking ───────────────────────────────────────────────────
+  // Build final ranking
   const sortedIds = Object.entries(normalised)
     .sort(([, a], [, b]) => b - a)
     .map(([id]) => id)

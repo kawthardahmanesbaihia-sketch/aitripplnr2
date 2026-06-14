@@ -53,8 +53,7 @@ import { sanitizeCityForSearch } from "@/lib/destination-city-guard"
 export const dynamic    = "force-dynamic"
 export const revalidate = 0
 
-// ─── Request / Response types ─────────────────────────────────────────────────
-
+// Request / Response types
 interface DestinationRequest {
   countryCode:      string
   countryName:      string
@@ -76,8 +75,7 @@ interface MapMarker {
   info:     { rating?: number; price?: string; cuisine?: string }
 }
 
-// ─── Map-marker builder (only from real coordinate data) ──────────────────────
-
+// Map-marker builder (only from real coordinate data)
 function buildMapMarkers(
   hotels:      HotelbedsHotel[],
   googleHotels: GooglePlaceHotel[],
@@ -129,8 +127,7 @@ function buildMapMarkers(
   return markers
 }
 
-// ─── Shape adapters (normalise for the DestinationData interface in the page) ─
-
+// Shape adapters (normalise for the DestinationData interface in the page)
 function adaptHotel(h: HotelbedsHotel, _budget: string) {
   const priceLevel =
     h.stars >= 4 ? "luxury"
@@ -220,8 +217,7 @@ function adaptTransfer(t: HotelbedsTransfer) {
   }
 }
 
-// ─── Cuisine hint from user preferences ──────────────────────────────────────
-
+// Cuisine hint from user preferences
 function cuisineHintFromPreferences(_prefs: string[], countryName: string): string | undefined {
   const CUISINE_MAP: Record<string, string> = {
     italy: "italian", france: "french", japan: "japanese", spain: "spanish tapas",
@@ -234,8 +230,7 @@ function cuisineHintFromPreferences(_prefs: string[], countryName: string): stri
   return CUISINE_MAP[countryName.toLowerCase()] ?? undefined
 }
 
-// ─── Route handler ────────────────────────────────────────────────────────────
-
+// Route handler
 export async function POST(request: NextRequest) {
   try {
     const body: DestinationRequest & { seed?: number } = await request.json()
@@ -262,8 +257,7 @@ export async function POST(request: NextRequest) {
       `budget="${budget}" squad="${squad}" seed=${requestSeed}`
     )
 
-    // ── Fire all real-data fetches in parallel ────────────────────────────────
-
+    // Fire all real-data fetches in parallel
     const squadContext         = squad !== "solo" ? `${squad} travel` : "solo travel"
     const enhancedPreferences  = [squadContext, ...userPreferences]
 
@@ -322,7 +316,7 @@ export async function POST(request: NextRequest) {
       }),
     ])
 
-    // ── Transfers (only when travelDates are provided) ────────────────────────
+    // Transfers (only when travelDates are provided)
     let transfersList: HotelbedsTransfer[] = []
     if (travelDates?.start) {
       const destCode    = getDestinationCode(targetCity)
@@ -336,7 +330,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Weather (only when travelDates are provided) ──────────────────────────
+    // Weather (only when travelDates are provided)
     let weatherData: object | null = null
     if (travelDates?.start) {
       const month = new Date(travelDates.start).toLocaleString("en-US", { month: "long" })
@@ -344,7 +338,7 @@ export async function POST(request: NextRequest) {
         .catch((e) => { console.error("[destination] Weather error:", e); return null })
     }
 
-    // ── Events (only when travelDates are provided) ───────────────────────────
+    // Events (only when travelDates are provided)
     let eventsData: object[] = []
     if (travelDates?.start && travelDates?.end) {
       // Call the events route handler logic inline to avoid HTTP round-trip
@@ -389,8 +383,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Unwrap settled results ────────────────────────────────────────────────
-
+    // Unwrap settled results
     const googleHotelsList     = (googleHotelsResult.status     === "fulfilled" ? googleHotelsResult.value     : []) as GooglePlaceHotel[]
     const restaurants          = (googleRestaurants.status      === "fulfilled" ? googleRestaurants.value      : []) as GooglePlaceRestaurant[]
     const rawActivities        = (hotelbedsActivities.status    === "fulfilled" ? hotelbedsActivities.value    : []) as HotelbedsActivity[]
@@ -423,7 +416,7 @@ export async function POST(request: NextRequest) {
     const adaptedTransfers   = transfersList.map(adaptTransfer)
     const mapMarkers         = buildMapMarkers(hotels, googleHotelsList, restaurants, googleActivitiesList)
 
-    // ── Positives / Negatives from Gemini (not hardcoded) ──────────────────────
+    // Positives / Negatives from Gemini (not hardcoded)
     const positives: string[] = summaryData?.pros ?? []
     const negatives: string[] = summaryData?.cons ?? []
 

@@ -14,8 +14,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface KpiData {
   total:            number
   accepted:         number
@@ -54,8 +53,7 @@ interface AnalyticsApiResponse {
 }
 
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
+// Helpers
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
@@ -113,8 +111,7 @@ function KpiCard({
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
+// Page
 export default function AgencyDashboard() {
   const { user }     = useAuth()
   const { packages } = usePackages()
@@ -125,7 +122,7 @@ export default function AgencyDashboard() {
   const [loading,        setLoading]        = useState(true)
   const [error,          setError]          = useState<string | null>(null)
 
-  // ── Package stats from localStorage (this agency only) ─────────────────────
+  // Package stats from localStorage (this agency only)
   const agencyPackages = useMemo(
     () => packages.filter(p => p.agencyId === user?.uid),
     [packages, user?.uid]
@@ -135,14 +132,14 @@ export default function AgencyDashboard() {
     ? Math.round(agencyPackages.reduce((s, p) => s + p.price, 0) / totalPackages)
     : 0
 
-  // ── Best package: merge DB data with localStorage destination ───────────────
+  // Best package: merge DB data with localStorage destination
   const bestPackage = useMemo(() => {
     if (!rawBest) return null
     const local = agencyPackages.find(p => p.id === rawBest.package_id)
     return { ...rawBest, destination: local?.destination ?? null }
   }, [rawBest, agencyPackages])
 
-  // ── Fetch DB data ───────────────────────────────────────────────────────────
+  // Fetch DB data
   useEffect(() => {
     if (!user) return
     setLoading(true)
@@ -172,7 +169,7 @@ export default function AgencyDashboard() {
       .finally(() => setLoading(false))
   }, [user])
 
-  // ── Derived display values ──────────────────────────────────────────────────
+  // Derived display values
   const rateDisplay = kpi
     ? (kpi.total === 0 ? "—" : `${kpi.acceptanceRate}%`)
     : "—"
@@ -195,7 +192,7 @@ export default function AgencyDashboard() {
     <ProtectedRoute requiredRole="agency">
       <div className="container mx-auto max-w-7xl px-4 py-8">
 
-        {/* ── Header ───────────────────────────────────────────────────────── */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -223,7 +220,7 @@ export default function AgencyDashboard() {
           </div>
         </motion.div>
 
-        {/* ── KPI Strip ────────────────────────────────────────────────────── */}
+        {/* KPI Strip */}
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-8">
           <KpiCard
             label="Your Packages"
@@ -266,7 +263,7 @@ export default function AgencyDashboard() {
           />
         </div>
 
-        {/* ── DB sections ──────────────────────────────────────────────────── */}
+        {/* DB sections */}
         {loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -280,7 +277,7 @@ export default function AgencyDashboard() {
             {/* Recent Requests + Best Package */}
             <div className="grid gap-6 lg:grid-cols-3 mb-6">
 
-              {/* ── Recent Booking Requests ─────────────────────────────── */}
+              {/* Recent Booking Requests */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -340,7 +337,7 @@ export default function AgencyDashboard() {
                 </Card>
               </motion.div>
 
-              {/* ── Best Performing Package ─────────────────────────────── */}
+              {/* Best Performing Package */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -401,7 +398,7 @@ export default function AgencyDashboard() {
               </motion.div>
             </div>
 
-            {/* ── Quick Actions ─────────────────────────────────────────── */}
+            {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -426,7 +423,7 @@ export default function AgencyDashboard() {
               </Card>
             </motion.div>
 
-            {/* ── Operational Insights ─────────────────────────────────── */}
+            {/* Operational Insights */}
             {kpi && kpi.total > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

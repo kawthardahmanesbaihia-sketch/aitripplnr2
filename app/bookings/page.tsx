@@ -5,8 +5,7 @@ import { motion } from "framer-motion"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { MapPin, Calendar, CalendarCheck, Loader2 } from "lucide-react"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface Booking {
   id:                  number
   package_id:          string
@@ -17,8 +16,7 @@ interface Booking {
   agency_user_id:      number
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
-
+// Status badge
 const STATUS_STYLES = {
   pending:  "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25",
   accepted: "bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/25",
@@ -39,8 +37,7 @@ function StatusBadge({ status }: { status: Booking["status"] }) {
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
+// Page
 function BookingsContent() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading,  setLoading]  = useState(true)

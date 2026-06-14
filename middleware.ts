@@ -35,8 +35,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── Verify token ────────────────────────────────────────────────────────────
-
+  // Verify token
   const token = req.cookies.get("auth_token")?.value
 
   if (!token) {
@@ -60,8 +59,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // ── Agency-only role check ──────────────────────────────────────────────────
-
+  // Agency-only role check
   if (isAgencyPage && payload.role !== "agency") {
     const url = req.nextUrl.clone()
     url.pathname = "/auth"

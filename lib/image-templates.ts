@@ -16,7 +16,7 @@ export interface ImageTemplate {
 }
 
 export const IMAGE_TEMPLATES: ImageTemplate[] = [
-  // ── LUXURY ────────────────────────────────────────────────────────────────
+  // LUXURY
   {
     id: "luxury_beach_resort",
     query: "luxury overwater bungalow resort infinity pool",
@@ -43,7 +43,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "luxury", travelers: "family", interests: ["relaxation", "swimming"], tripStyle: "relaxed", climate: "mediterranean", foodStyle: "fine-dining", environment: "beach", vibe: "luxurious" },
   },
 
-  // ── BACKPACKING / BUDGET ──────────────────────────────────────────────────
+  // BACKPACKING / BUDGET
   {
     id: "backpacking_hostel_social",
     query: "backpacker hostel common room travelers meeting friends",
@@ -70,7 +70,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "budget", travelers: "friends", interests: ["beach", "camping"], tripStyle: "adventure", climate: "tropical", foodStyle: "street-food", environment: "beach", vibe: "social" },
   },
 
-  // ── SOLO TRAVEL ───────────────────────────────────────────────────────────
+  // SOLO TRAVEL
   {
     id: "solo_city_exploration",
     query: "solo traveler exploring city street photography urban",
@@ -92,7 +92,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "solo", interests: ["relaxation", "reading"], tripStyle: "relaxed", climate: "tropical", foodStyle: "seafood", environment: "beach", vibe: "peaceful" },
   },
 
-  // ── COUPLE / ROMANTIC ─────────────────────────────────────────────────────
+  // COUPLE / ROMANTIC
   {
     id: "couple_paris_romantic",
     query: "couple romantic Paris Eiffel Tower sunset dinner",
@@ -114,7 +114,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "couple", interests: ["culture", "romance"], tripStyle: "cultural", climate: "mediterranean", foodStyle: "fine-dining", environment: "city", vibe: "romantic" },
   },
 
-  // ── FAMILY TRAVEL ─────────────────────────────────────────────────────────
+  // FAMILY TRAVEL
   {
     id: "family_beach_kids",
     query: "family beach vacation kids playing sand ocean fun",
@@ -136,7 +136,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "family", interests: ["culture", "history"], tripStyle: "cultural", climate: "temperate", foodStyle: "local", environment: "city", vibe: "cultural" },
   },
 
-  // ── FRIENDS / GROUP ───────────────────────────────────────────────────────
+  // FRIENDS / GROUP
   {
     id: "friends_road_trip",
     query: "friends road trip convertible car laughing highway",
@@ -163,7 +163,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "friends", interests: ["music", "nightlife"], tripStyle: "party", climate: "temperate", foodStyle: "street-food", environment: "city", vibe: "social" },
   },
 
-  // ── NIGHTLIFE / PARTY ─────────────────────────────────────────────────────
+  // NIGHTLIFE / PARTY
   {
     id: "nightlife_club_ibiza",
     query: "nightclub Ibiza party DJ lights dancing crowd",
@@ -180,7 +180,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "friends", interests: ["culture", "nightlife"], tripStyle: "party", climate: "tropical", foodStyle: "street-food", environment: "city", vibe: "social" },
   },
 
-  // ── ADVENTURE ─────────────────────────────────────────────────────────────
+  // ADVENTURE
   {
     id: "adventure_bungee_jump",
     query: "bungee jump extreme sports adventure canyon",
@@ -242,7 +242,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "budget", travelers: "friends", interests: ["canyoning", "adventure", "nature"], tripStyle: "adventure", climate: "mediterranean", foodStyle: "local", environment: "nature", vibe: "adventurous" },
   },
 
-  // ── HIKING / NATURE ───────────────────────────────────────────────────────
+  // HIKING / NATURE
   {
     id: "hiking_patagonia",
     query: "Patagonia trekking dramatic mountains glaciers landscapes",
@@ -269,7 +269,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "couple", interests: ["nature", "culture"], tripStyle: "adventure", climate: "desert", foodStyle: "local", environment: "desert", vibe: "adventurous" },
   },
 
-  // ── BEACH ─────────────────────────────────────────────────────────────────
+  // BEACH
   {
     id: "beach_tropical_paradise",
     query: "tropical paradise beach crystal clear water white sand",
@@ -311,7 +311,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "couple", interests: ["relaxation", "photography"], tripStyle: "relaxed", climate: "tropical", foodStyle: "seafood", environment: "beach", vibe: "romantic" },
   },
 
-  // ── MOUNTAINS / SNOW ──────────────────────────────────────────────────────
+  // MOUNTAINS / SNOW
   {
     id: "skiing_resort",
     query: "ski resort powder snow slopes alpine mountains",
@@ -328,7 +328,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "budget", travelers: "solo", interests: ["hiking", "photography"], tripStyle: "adventure", climate: "cold", foodStyle: "local", environment: "mountain", vibe: "adventurous" },
   },
 
-  // ── CULTURAL ──────────────────────────────────────────────────────────────
+  // CULTURAL
   {
     id: "cultural_ancient_temples",
     query: "ancient temple ruins historical site morning light",
@@ -390,7 +390,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "budget", travelers: "solo", interests: ["art", "culture", "city"], tripStyle: "cultural", climate: "temperate", foodStyle: "street-food", environment: "city", vibe: "adventurous" },
   },
 
-  // ── FOOD & GASTRONOMY ─────────────────────────────────────────────────────
+  // FOOD & GASTRONOMY
   {
     id: "food_fine_dining",
     query: "fine dining restaurant gourmet dish elegant plate",
@@ -477,7 +477,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "budget", travelers: "solo", interests: ["food", "local culture"], tripStyle: "foodie", climate: "temperate", foodStyle: "local", environment: "city", vibe: "peaceful" },
   },
 
-  // ── WELLNESS / SPA ────────────────────────────────────────────────────────
+  // WELLNESS / SPA
   {
     id: "wellness_spa_resort",
     query: "luxury spa resort wellness pool zen relaxation",
@@ -499,7 +499,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "budget", travelers: "solo", interests: ["nature", "wellness"], tripStyle: "wellness", climate: "temperate", foodStyle: "vegan", environment: "nature", vibe: "peaceful" },
   },
 
-  // ── CITY TRIPS ────────────────────────────────────────────────────────────
+  // CITY TRIPS
   {
     id: "city_new_york",
     query: "New York City skyline Manhattan skyscrapers energy",
@@ -521,7 +521,7 @@ export const IMAGE_TEMPLATES: ImageTemplate[] = [
     tags: { budget: "mid-range", travelers: "family", interests: ["architecture", "city"], tripStyle: "cultural", climate: "tropical", foodStyle: "diverse", environment: "city", vibe: "cultural" },
   },
 
-  // ── RESORTS ───────────────────────────────────────────────────────────────
+  // RESORTS
   {
     id: "resort_all_inclusive",
     query: "all inclusive tropical resort pool swim-up bar",

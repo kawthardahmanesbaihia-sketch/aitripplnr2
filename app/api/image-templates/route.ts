@@ -9,7 +9,7 @@ import {
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-// ── Response shape ────────────────────────────────────────────────────────────
+// Response shape
 interface FetchedTemplateImage {
   id: string
   templateId: string
@@ -29,7 +29,7 @@ interface UnsplashPhoto {
   photographer: string
 }
 
-// ── Session-level cross-request deduplication ─────────────────────────────────
+// Session-level cross-request deduplication
 // Prevents the same Unsplash image from appearing across refreshes or categories
 // within a 30-minute server process window.
 const _globalSeenIds   = new Set<string>()
@@ -48,21 +48,21 @@ function isGlobalDuplicate(id: string): boolean {
   return false
 }
 
-// ── Distribution constants ────────────────────────────────────────────────────
+// Distribution constants
 const DIVERSITY_QUERY_COUNT = 4    // Phase 1 parallel subqueries — reduced from 8 to halve burst
 const MAX_PER_QUERY         = 3    // hard cap per query — Phase 1 (reduced from 4)
 const MAX_TOPUP_PER_QUERY   = 2    // hard cap per query — Phase 2 top-up (reduced from 3)
 const MAX_PER_PHOTOGRAPHER  = 2    // photographer dedup — unchanged
 const EARLY_STOP_THRESHOLD  = 18   // stop once we have this many; 18 diverse > 24 repetitive/failed
 
-// ── Compatibility shim for AbortSignal.timeout ────────────────────────────────
+// Compatibility shim for AbortSignal.timeout
 function makeTimeoutSignal(ms: number): { signal: AbortSignal; clear: () => void } {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), ms)
   return { signal: controller.signal, clear: () => clearTimeout(timer) }
 }
 
-// ── Core fetch helper ─────────────────────────────────────────────────────────
+// Core fetch helper
 async function fetchUnsplashBatch(
   query: string,
   accessKey: string,
@@ -116,7 +116,7 @@ async function fetchUnsplashBatch(
   }
 }
 
-// ── Route handler ─────────────────────────────────────────────────────────────
+// Route handler
 export async function GET(req: NextRequest) {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY
 
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
   // Shuffle pool so each request draws a different cross-section of subcategories
   const shuffled = [...queryPool].sort(() => Math.random() - 0.5)
 
-  // ── Phase 1: parallel fetch — first DIVERSITY_QUERY_COUNT subqueries ──────────
+  // Phase 1: parallel fetch — first DIVERSITY_QUERY_COUNT subqueries
   // All Phase 1 queries fire simultaneously; results are capped per query so no
   // single subcategory can fill all slots.
   const phase1Queries  = shuffled.slice(0, DIVERSITY_QUERY_COUNT)
@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Phase 2: sequential top-up — skipped entirely when EARLY_STOP_THRESHOLD met ─
+  // Phase 2: sequential top-up — skipped entirely when EARLY_STOP_THRESHOLD met
   // Avoids wasteful requests when Phase 1 already returned enough diverse images.
   const phase2Queries = shuffled.slice(DIVERSITY_QUERY_COUNT)
   if (images.length < EARLY_STOP_THRESHOLD) {
@@ -251,7 +251,7 @@ export async function GET(req: NextRequest) {
     requestsAvoided = phase2Queries.length
   }
 
-  // ── Final fallback — category pool returned nothing ───────────────────────────
+  // Final fallback — category pool returned nothing
   if (images.length === 0 && queryPool !== FALLBACK_QUERIES) {
     console.warn("[image-templates] Category pool returned 0 results — trying fallback queries")
     for (const entry of FALLBACK_QUERIES) {
@@ -290,7 +290,7 @@ export async function GET(req: NextRequest) {
   images.sort(() => Math.random() - 0.5)
   const finalImages = images.slice(0, count)
 
-  // ── Diagnostics ───────────────────────────────────────────────────────────────
+  // Diagnostics
   const distribution = Object.entries(perQueryCounts)
     .map(([id, n]) => `${id}×${n}`)
     .join(", ")

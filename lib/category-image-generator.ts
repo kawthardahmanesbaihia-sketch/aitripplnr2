@@ -6,8 +6,7 @@
 
 import { generateTravelImage } from "@/lib/replicate-generator"
 
-// ── Unsplash fallback ─────────────────────────────────────────────────────────
-
+// Unsplash fallback
 const UNSPLASH_API = "https://api.unsplash.com/search/photos"
 
 async function fetchUnsplashFallback(

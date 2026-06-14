@@ -1,7 +1,6 @@
 import dns from "dns"
 
-// ── Format validation ──────────────────────────────────────────────────────────
-
+// Format validation
 const EMAIL_REGEX =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/
 
@@ -9,8 +8,7 @@ export function validateEmailFormat(email: string): boolean {
   return EMAIL_REGEX.test(email.trim())
 }
 
-// ── MX record validation ───────────────────────────────────────────────────────
-
+// MX record validation
 export interface EmailValidationResult {
   valid:  boolean
   reason?: string

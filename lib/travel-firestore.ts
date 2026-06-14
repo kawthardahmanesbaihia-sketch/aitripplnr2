@@ -25,8 +25,7 @@ function isUserAuthenticated(): boolean {
   }
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 export interface TravelSessionData {
   /** ISO-string URLs of the images the user selected */
   selectedImages: string[]
@@ -69,8 +68,7 @@ export interface SavedTravelSession extends TravelSessionData {
   createdAt: number
 }
 
-// ─── Save ─────────────────────────────────────────────────────────────────────
-
+// Save
 /**
  * Persist a travel analysis session to Firestore.
  * Returns the generated sessionId, or null if Firestore is unavailable.
@@ -108,8 +106,7 @@ export async function saveTravelSession(
   }
 }
 
-// ─── Read ─────────────────────────────────────────────────────────────────────
-
+// Read
 /**
  * Retrieve a previously saved travel session by its ID.
  * Returns null if not found or Firestore is unavailable.
@@ -128,8 +125,7 @@ export async function getTravelSession(
   }
 }
 
-// ─── Itinerary persistence ────────────────────────────────────────────────────
-
+// Itinerary persistence
 export interface SavedItinerary {
   itineraryId: string
   destination: string

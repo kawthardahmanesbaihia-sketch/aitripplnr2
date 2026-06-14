@@ -15,8 +15,7 @@ import { useLanguage } from "@/components/language-provider"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// Types
 interface Notif {
   id:                 number
   type:               "booking_request" | "booking_status"
@@ -27,8 +26,7 @@ interface Notif {
   created_at:         string
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
+// Helpers
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
@@ -41,8 +39,7 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
-
+// Component
 export function Navbar() {
   const [isScrolled,       setIsScrolled]       = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -67,14 +64,14 @@ export function Navbar() {
     { name: t("contact"),   href: "/contact" },
   ]
 
-  // ── Scroll ──────────────────────────────────────────────────────────────────
+  // Scroll
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // ── Click outside (both dropdowns) ──────────────────────────────────────────
+  // Click outside (both dropdowns)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -88,7 +85,7 @@ export function Navbar() {
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
 
-  // ── Fetch unread count on login / logout ─────────────────────────────────────
+  // Fetch unread count on login / logout
   useEffect(() => {
     if (!user) {
       setUnreadCount(0)
@@ -102,7 +99,7 @@ export function Navbar() {
       .catch(() => {})
   }, [user])
 
-  // ── Lazy-load full notification list ─────────────────────────────────────────
+  // Lazy-load full notification list
   const loadNotifications = useCallback(() => {
     if (notifLoaded) return
     setNotifLoaded(true)
@@ -139,7 +136,7 @@ export function Navbar() {
     router.push("/")
   }
 
-  // ── Menus ────────────────────────────────────────────────────────────────────
+  // Menus
   const travelerMenu = [
     { label: "My Profile",      href: "/profile",               icon: User          },
     { label: "My Bookings",     href: "/bookings",              icon: CalendarCheck },
@@ -174,7 +171,7 @@ export function Navbar() {
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
 
-        {/* ── Logo ─────────────────────────────────────────────────────────── */}
+        {/* Logo */}
         <Link href="/" className="flex items-center gap-2 transition-all duration-300 hover:scale-105">
           <motion.div
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
@@ -186,7 +183,7 @@ export function Navbar() {
           <span className="hidden font-bold text-lg sm:inline-block">{t("Ai Trip Planner")}</span>
         </Link>
 
-        {/* ── Desktop Nav ───────────────────────────────────────────────────── */}
+        {/* Desktop Nav */}
         <div className="hidden items-center gap-1 md:flex">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
@@ -214,12 +211,12 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* ── Right side ───────────────────────────────────────────────────── */}
+        {/* Right side */}
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
 
-          {/* ── Notification Bell ─────────────────────────────────────────── */}
+          {/* Notification Bell */}
           {user && (
             <div className="relative" ref={notifRef}>
               <button
@@ -295,7 +292,7 @@ export function Navbar() {
             </div>
           )}
 
-          {/* ── User avatar / Get Started ────────────────────────────────── */}
+          {/* User avatar / Get Started */}
           {user ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -368,7 +365,7 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* ── Mobile menu ───────────────────────────────────────────────────── */}
+      {/* Mobile menu */}
       {isMobileMenuOpen && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}

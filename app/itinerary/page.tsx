@@ -127,7 +127,7 @@ export default function ItineraryPage() {
     }
   };
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  // Loading
   if (isGenerating) {
     return (
       <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -144,7 +144,7 @@ export default function ItineraryPage() {
     );
   }
 
-  // ── Error / empty ──────────────────────────────────────────────────────────
+  // Error / empty
   if (!itinerary) {
     return (
       <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -164,7 +164,7 @@ export default function ItineraryPage() {
     );
   }
 
-  // ── Main view (unchanged UI structure, real data) ─────────────────────────
+  // Main view (unchanged UI structure, real data)
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
       {/* Header */}

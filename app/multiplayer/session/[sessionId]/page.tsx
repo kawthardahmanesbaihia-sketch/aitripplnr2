@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AnimatedBackgroundElements } from '@/components/animated-background-elements';
@@ -32,6 +32,26 @@ export default function SessionPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+
+  // Navigate ALL players (host and non-host) to /results when analysis completes.
+  // Double-guard: ref (fast, same mount) + sessionStorage flag (survives remount on browser back).
+  const navigatedRef = useRef(false);
+  useEffect(() => {
+    if (!session?.analysisResults || !sessionId || navigatedRef.current) return;
+    if (sessionStorage.getItem(`mp_results_${sessionId}`)) return;
+    navigatedRef.current = true;
+    sessionStorage.setItem(`mp_results_${sessionId}`, '1');
+    sessionStorage.setItem('analysisResults', JSON.stringify({
+      ...session.analysisResults,
+      seed: session.analysisResults.requestSeed,
+    }));
+    if (session.preferences?.dateRange) {
+      sessionStorage.setItem('travelDates', JSON.stringify(session.preferences.dateRange));
+    }
+    sessionStorage.setItem('selectedBudget', session.preferences?.budget || 'medium');
+    sessionStorage.setItem('requestSeed', String(session.analysisResults.requestSeed));
+    router.push('/results');
+  }, [session?.analysisResults, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Redirect if not connected after a reasonable wait
   useEffect(() => {
@@ -76,7 +96,10 @@ export default function SessionPage() {
         dateRange: session.preferences?.dateRange,
         destination: session.preferences?.destination,
         travelType: session.preferences?.travelType,
-        imageMetadata: session.preferences?.selectedImageMetadata || [],
+        imageMetadata: session.preferences?.selectedImages?.map((url, i) => ({
+          url,
+          ...(session.preferences?.selectedImageMetadata?.[i] ?? {}),
+        })) || [],
       };
 
       // Call the multiplayer analysis API

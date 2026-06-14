@@ -9,14 +9,13 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-// ── Model ─────────────────────────────────────────────────────────────────────
+// Model
 // gemini-1.5-flash sunset date: 2025-05-14 → HTTP 404 for any call after that.
 // gemini-2.0-flash is GA, supports multimodal + JSON mode, and is significantly
 // more capable than 1.5-flash for travel psychology extraction.
 const GEMINI_MODEL = "gemini-2.0-flash"
 
-// ── Landmark detection result ─────────────────────────────────────────────────
-
+// Landmark detection result
 export interface LandmarkDetection {
   detected: boolean
   name: string | null       // e.g. "Petra Treasury" — landmark name when recognised
@@ -25,8 +24,7 @@ export interface LandmarkDetection {
   confidence: number          // 0.0 – 1.0
 }
 
-// ── Legacy shape (used by /api/analyze route) ─────────────────────────────────
-
+// Legacy shape (used by /api/analyze route)
 export interface GeminiImageAnalysis {
   travelStyle: "adventure" | "luxury" | "cultural" | "relaxed" | "budget"
   preferredClimate: "tropical" | "temperate" | "cold" | "desert" | "mediterranean"
@@ -37,8 +35,7 @@ export interface GeminiImageAnalysis {
   tags: string[]
 }
 
-// ── Travel Psychology shape (used by /api/explore-analyze route) ──────────────
-
+// Travel Psychology shape (used by /api/explore-analyze route)
 export interface TravelPreferenceAnalysis {
   travelStyles: string[]
   activities: string[]
@@ -65,7 +62,7 @@ export interface TravelPreferenceAnalysis {
   familyFriendly: boolean
   confidenceLevel: number
 
-  // ── New dimensions (Step 2 of deep-analysis redesign) ─────────────────────
+  // New dimensions (Step 2 of deep-analysis redesign)
   terrain?: string[]      // terrain character: mountainous, coastal, rocky, desert, forested, island, volcanic, polar, flat
   cityStyle?: string[]    // urban aesthetic: futuristic, modern, historic, traditional, old-town, skyscraper, mixed
   foodSignals?: string[]  // food culture: seafood, street-food, fine-dining, local-cuisine, asian-cuisine, mediterranean, spiced, grilled, tropical-fruits
@@ -73,8 +70,7 @@ export interface TravelPreferenceAnalysis {
   landmark?: LandmarkDetection | null  // detected famous landmark — null when nothing recognised
 }
 
-// ── Extended destination-analysis shape (kept for backward compat) ────────────
-
+// Extended destination-analysis shape (kept for backward compat)
 export interface DestinationPreferenceAnalysis {
   possible_locations: string[]
   landmarks: string[]
@@ -96,8 +92,7 @@ export interface DestinationPreferenceAnalysis {
   tags: string[]
 }
 
-// ── SDK helper ────────────────────────────────────────────────────────────────
-
+// SDK helper
 function buildModel(apiKey: string, maxOutputTokens: number, temperature: number) {
   const genAI = new GoogleGenerativeAI(apiKey)
   return genAI.getGenerativeModel({
@@ -110,8 +105,7 @@ function buildModel(apiKey: string, maxOutputTokens: number, temperature: number
   })
 }
 
-// ── Image fetching ────────────────────────────────────────────────────────────
-
+// Image fetching
 async function fetchImageAsBase64(
   url: string
 ): Promise<{ base64: string; mimeType: string } | null> {
@@ -131,8 +125,7 @@ async function fetchImageAsBase64(
   }
 }
 
-// ── Shared image preparation ──────────────────────────────────────────────────
-
+// Shared image preparation
 async function prepareImage(
   imageUrl: string
 ): Promise<{ base64: string; mimeType: string; source: string } | null> {
@@ -149,7 +142,7 @@ async function prepareImage(
   return { ...fetched, source: imageUrl.slice(0, 60) }
 }
 
-// ── JSON parsing helper ───────────────────────────────────────────────────────
+// JSON parsing helper
 // Gemini 2.0 with responseMimeType:"application/json" returns clean JSON, but
 // we keep a markdown-strip fallback just in case.
 
@@ -161,10 +154,8 @@ function parseGeminiJson<T>(text: string): T | null {
   try { return JSON.parse(match[0]) as T } catch { return null }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── 1. Legacy vision analysis (used by /api/analyze) ─────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ---
+// 1. Legacy vision analysis (used by /api/analyze)
 const ANALYSIS_PROMPT = `Analyze this travel image. Return ONLY a valid JSON object — no markdown, no explanation, no code block. Exact schema:
 {
   "travelStyle": "adventure|luxury|cultural|relaxed|budget",
@@ -217,12 +208,9 @@ export async function analyzeImagesWithGemini(
   return Promise.all(limited.map((url) => analyzeImageWithGemini(url)))
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── 2. Travel psychology analysis (used by /api/explore-analyze) ──────────────
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ---
+// 2. Travel psychology analysis (used by /api/explore-analyze)
 const TRAVEL_PSYCHOLOGY_PROMPT = `You are a Travel Intelligence AI. Analyze this image across two passes simultaneously.
-
 ━━━ PASS 1 — LANDMARK & LOCATION DETECTION ━━━
 Scan the image for any world-famous landmark, natural wonder, or iconic recognisable place.
 Known examples (non-exhaustive — detect others confidently too):
@@ -372,10 +360,8 @@ export async function analyzeImagesForTravel(
   return Promise.all(limited.map((url, i) => analyzeImageForTravel(url, i)))
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── 3. Profile text analysis (used by /api/analyze — template path) ───────────
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ---
+// 3. Profile text analysis (used by /api/analyze — template path)
 export async function analyzeProfileWithGemini(profileSummary: string): Promise<{
   recommendationReason: string
   travelPersonality: string
@@ -418,12 +404,9 @@ Return exactly this JSON schema:
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── 4. Destination analysis (backward compat — not used in current routes) ────
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ---
+// 4. Destination analysis (backward compat — not used in current routes)
 const DESTINATION_ANALYSIS_PROMPT = `You are a travel intelligence system. Analyze this image in two steps.
-
 STEP 1 — GEOGRAPHIC & CULTURAL DETECTION (do this first):
 - Identify any recognizable landmark, monument, or famous place. Name it precisely if you recognize it.
 - Identify the architectural style (e.g. "Islamic", "Japanese traditional", "French Haussmann", "North African brutalist").
@@ -487,10 +470,8 @@ export async function analyzeImagesForDestination(
   return Promise.all(limited.map((url) => analyzeImageForDestination(url)))
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── 5. Mapping helper (used by /api/analyze) ──────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ---
+// 5. Mapping helper (used by /api/analyze)
 export function geminiToImageMetadata(analysis: GeminiImageAnalysis): {
   tags: string[]
   mood: string

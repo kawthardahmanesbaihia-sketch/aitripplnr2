@@ -17,8 +17,7 @@ interface HistoryRow extends RowDataPacket {
   viewed_at:        string
 }
 
-// ── GET /api/profile/history ──────────────────────────────────────────────────
-
+// GET /api/profile/history
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth
@@ -49,8 +48,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ── POST /api/profile/history — auto-save a destination view ─────────────────
-
+// POST /api/profile/history — auto-save a destination view
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth

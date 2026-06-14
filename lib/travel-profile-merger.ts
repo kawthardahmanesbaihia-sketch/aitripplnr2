@@ -9,10 +9,9 @@
 
 import type { TravelPreferenceAnalysis, LandmarkDetection } from "./gemini-vision"
 
-// ── Public types ──────────────────────────────────────────────────────────────
-
+// Public types
 export interface MergedTravelProfile {
-  // ── Averaged numeric preference levels (0–100) ────────────────────────────
+  // Averaged numeric preference levels (0–100)
   luxuryLevel: number
   natureLevel: number
   cityLevel: number
@@ -24,7 +23,7 @@ export interface MergedTravelProfile {
   romanticAffinity: number
   foodExplorationAffinity: number
 
-  // ── Frequency maps: value → how many images surfaced this signal ──────────
+  // Frequency maps: value → how many images surfaced this signal
   travelStyles: Record<string, number>
   activities: Record<string, number>
   climatePreference: Record<string, number>
@@ -36,30 +35,29 @@ export interface MergedTravelProfile {
   explorationStyle: Record<string, number>  // how the traveler explores
   environmentTypes: Record<string, number>  // physical environments seen across images
 
-  // ── New dimension frequency maps (Step 2 redesign) ───────────────────────
+  // New dimension frequency maps (Step 2 redesign)
   terrain: Record<string, number>     // terrain character: mountainous, coastal, rocky, etc.
   cityStyle: Record<string, number>   // urban aesthetic: futuristic, modern, historic, etc.
   foodSignals: Record<string, number> // food culture: seafood, street-food, fine-dining, etc.
   mood: Record<string, number>        // explicit mood signals: peaceful, wild, romantic, etc.
 
-  // ── Dominant signals derived from frequency maps ──────────────────────────
+  // Dominant signals derived from frequency maps
   dominantEnvironment: string              // top physical environment type (e.g. "desert", "beach", "mountain")
 
-  // ── Landmark detection (strongest signal across all images) ──────────────
+  // Landmark detection (strongest signal across all images)
   detectedLandmark: LandmarkDetection | null
 
-  // ── Most-frequent categorical values ─────────────────────────────────────
+  // Most-frequent categorical values
   budgetLevel: "low" | "medium" | "high" | "ultra"
   travelType: "solo" | "couple" | "friends" | "family"
   familyFriendly: boolean
 
-  // ── Meta ─────────────────────────────────────────────────────────────────
+  // Meta
   avgConfidence: number   // average Gemini confidence across images
   imageCount: number      // how many analyses contributed
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
+// Helpers
 type NumericKey = keyof Pick<
   TravelPreferenceAnalysis,
   | "luxuryLevel" | "natureLevel" | "cityLevel" | "relaxationLevel"
@@ -95,8 +93,7 @@ function mostCommon<T extends string>(values: T[]): T {
   return Object.entries(counts).sort(([, a], [, b]) => b - a)[0][0] as T
 }
 
-// ── Fallback profile used when Gemini returns all nulls ───────────────────────
-
+// Fallback profile used when Gemini returns all nulls
 function defaultProfile(): MergedTravelProfile {
   return {
     luxuryLevel: 50,
@@ -133,8 +130,7 @@ function defaultProfile(): MergedTravelProfile {
   }
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
-
+// Main export
 /**
  * Merge multiple per-image analyses into one unified travel preference profile.
  * Images that produce null analyses (API failure) are silently skipped.
@@ -147,7 +143,7 @@ export function mergeAnalyses(
 
   if (valid.length === 0) return defaultProfile()
 
-  // ── Pick the strongest detected landmark across all images ────────────────
+  // Pick the strongest detected landmark across all images
   // We take the one with the highest confidence that has detected=true.
   const landmarks = valid
     .map(a => a.landmark)
@@ -162,7 +158,7 @@ export function mergeAnalyses(
     )
   }
 
-  // ── Merge mood signals: combine mood[] + atmosphere[] ────────────────────
+  // Merge mood signals: combine mood[] + atmosphere[]
   // mood is a new explicit field; atmosphere is the legacy version.
   // We union both so scoring can use either without double-counting.
   const moodItems = countItems(valid.map(a => a.mood ?? []))
@@ -197,7 +193,7 @@ export function mergeAnalyses(
     explorationStyle:  countItems(valid.map(a => a.explorationStyle ?? [])),
     environmentTypes:  countItems(valid.map(a => a.environmentTypes ?? [])),
 
-    // ── New dimension maps ──────────────────────────────────────────────────
+    // New dimension maps
     terrain:    countItems(valid.map(a => a.terrain ?? [])),
     cityStyle:  countItems(valid.map(a => a.cityStyle ?? [])),
     foodSignals: countItems(valid.map(a => a.foodSignals ?? [])),

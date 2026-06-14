@@ -147,7 +147,7 @@ export function ItineraryGenerator({
         Smart Itinerary
       </h2>
 
-      {/* ── Input form ── */}
+      {/* Input form */}
       <Card className="border-2 bg-card/50 backdrop-blur-sm p-6 mb-6">
         <div className="grid gap-6 md:grid-cols-2">
           {/* Travel dates */}
@@ -269,7 +269,7 @@ export function ItineraryGenerator({
         </div>
       </Card>
 
-      {/* ── Generated day cards ── */}
+      {/* Generated day cards */}
       <AnimatePresence>
         {generatedDays && generatedDays.length > 0 && (
           <motion.div

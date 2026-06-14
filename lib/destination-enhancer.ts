@@ -80,7 +80,7 @@ export function getBestCity(countryCode: string, profile: any, budget: string): 
         'high': ['London', 'Edinburgh']
       }
     },
-    // ── Asia-Pacific ────────────────────────────────────────────────────────────
+    // Asia-Pacific
     'TH': {
       cities: ['Bangkok', 'Chiang Mai', 'Phuket', 'Koh Samui', 'Pai'],
       budgetMapping: {
@@ -137,7 +137,7 @@ export function getBestCity(countryCode: string, profile: any, budget: string): 
         'high': ['Queenstown', 'Auckland']
       }
     },
-    // ── Middle East / Africa ────────────────────────────────────────────────────
+    // Middle East / Africa
     'AE': {
       cities: ['Dubai', 'Abu Dhabi'],
       budgetMapping: {
@@ -170,7 +170,7 @@ export function getBestCity(countryCode: string, profile: any, budget: string): 
         'high': ['Masai Mara', 'Amboseli']
       }
     },
-    // ── Europe ──────────────────────────────────────────────────────────────────
+    // Europe
     'GR': {
       cities: ['Athens', 'Santorini', 'Mykonos', 'Thessaloniki', 'Crete'],
       budgetMapping: {
@@ -211,7 +211,7 @@ export function getBestCity(countryCode: string, profile: any, budget: string): 
         'high': ['Cappadocia', 'Bodrum']
       }
     },
-    // ── Americas ────────────────────────────────────────────────────────────────
+    // Americas
     'BR': {
       cities: ['Rio de Janeiro', 'São Paulo', 'Florianópolis', 'Salvador', 'Manaus'],
       budgetMapping: {

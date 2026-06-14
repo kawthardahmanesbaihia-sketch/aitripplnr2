@@ -80,7 +80,7 @@ export default function MultiplayerPage() {
     <div className="relative min-h-screen px-4 py-16">
       <AnimatedBackgroundElements />
 
-      {/* ── Session recovery dialog ───────────────────────────────────────── */}
+      {/* Session recovery dialog */}
       <Dialog open={checkState === 'prompt'} onOpenChange={() => {}}>
         <DialogContent
           showCloseButton={false}
@@ -138,7 +138,7 @@ export default function MultiplayerPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Firebase validation spinner ───────────────────────────────────── */}
+      {/* Firebase validation spinner */}
       {checkState === 'checking' && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/60 backdrop-blur-sm">
           <motion.div

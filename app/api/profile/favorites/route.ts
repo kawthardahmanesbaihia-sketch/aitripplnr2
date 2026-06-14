@@ -15,8 +15,7 @@ interface FavRow extends RowDataPacket {
   saved_at:         string
 }
 
-// ── GET /api/profile/favorites ────────────────────────────────────────────────
-
+// GET /api/profile/favorites
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth
@@ -32,8 +31,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ favorites: rows })
 }
 
-// ── POST /api/profile/favorites — save or remove (toggle) ────────────────────
-
+// POST /api/profile/favorites — save or remove (toggle)
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth
@@ -79,8 +77,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ saved: true, id: result.insertId }, { status: 201 })
 }
 
-// ── DELETE /api/profile/favorites?id=X ───────────────────────────────────────
-
+// DELETE /api/profile/favorites?id=X
 export async function DELETE(req: NextRequest) {
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth

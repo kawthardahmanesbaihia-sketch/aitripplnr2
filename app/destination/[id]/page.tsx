@@ -80,8 +80,7 @@ const SQUAD_CONFIG: Record<SquadType, { label: string; emoji: string; tagline: s
   family:  { label: "Family",  emoji: "👨‍👩‍👧",  tagline: "Fun for every generation" },
 }
 
-// ── AI explanation helpers ────────────────────────────────────────────────────
-
+// AI explanation helpers
 const CATEGORY_READABLE: Record<string, string> = {
   "winter arctic":        "arctic and winter scenery",
   "wildlife fauna":       "wildlife and fauna",
@@ -203,7 +202,7 @@ function buildSmartNegatives(
   const vibesLower = vibes.map((v) => v.toLowerCase())
   const activitiesLower = activities.map((a) => a.toLowerCase())
 
-  // ── Season mismatch ───────────────────────────────────────────────────────
+  // Season mismatch
   if (travelMonth !== null) {
     const summerMonths = [4, 5, 6, 7, 8]   // May–Sep
     const winterMonths = [11, 0, 1, 2]      // Dec–Mar
@@ -232,7 +231,7 @@ function buildSmartNegatives(
     }
   }
 
-  // ── Environment mismatch ──────────────────────────────────────────────────
+  // Environment mismatch
   const wantsBeach = vibesLower.some((v) =>
     v.includes("beach") || v.includes("ocean") || v.includes("coastal") || v.includes("tropical beach")
   )
@@ -265,12 +264,12 @@ function buildSmartNegatives(
     )
   }
 
-  // ── Include CLIP-generated negatives ─────────────────────────────────────
+  // Include CLIP-generated negatives
   for (const neg of rawNegatives.slice(0, 2)) {
     if (warnings.length < 4 && !warnings.includes(neg)) warnings.push(neg)
   }
 
-  // ── Fallback ──────────────────────────────────────────────────────────────
+  // Fallback
   if (warnings.length === 0) {
     warnings.push(
       "Popular areas can become crowded during peak tourist season — early booking is recommended."
@@ -284,8 +283,6 @@ function buildSmartNegatives(
 
   return warnings.slice(0, 4)
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 function DestinationPageInner() {
   const params = useParams()

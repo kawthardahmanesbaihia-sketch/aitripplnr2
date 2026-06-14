@@ -18,8 +18,7 @@ import {
   ArrowLeft, Loader2,
 } from "lucide-react"
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
+// Helpers
 type Status = "active" | "draft" | "featured"
 
 function statusOf(pkg: Package): Status {
@@ -42,8 +41,7 @@ const STATUS_LABELS: Record<Status, string> = {
 const FILTER_TABS = ["all", "active", "draft", "featured"] as const
 type FilterTab = typeof FILTER_TABS[number]
 
-// ── Delete confirmation modal ─────────────────────────────────────────────────
-
+// Delete confirmation modal
 function DeleteModal({
   pkg,
   onConfirm,
@@ -87,8 +85,7 @@ function DeleteModal({
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
+// Page
 export default function PackagesListPage() {
   const { user }                       = useAuth()
   const { packages, deletePackage, isLoading } = usePackages()
@@ -134,7 +131,7 @@ export default function PackagesListPage() {
     <ProtectedRoute requiredRole="agency">
       <div className="container mx-auto max-w-7xl px-4 py-8">
 
-        {/* ── Header ─────────────────────────────────────────────────── */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -162,7 +159,7 @@ export default function PackagesListPage() {
           </div>
         </motion.div>
 
-        {/* ── Stats ──────────────────────────────────────────────────── */}
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -187,7 +184,7 @@ export default function PackagesListPage() {
           ))}
         </motion.div>
 
-        {/* ── Search & Filter ─────────────────────────────────────────── */}
+        {/* Search & Filter */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -221,7 +218,7 @@ export default function PackagesListPage() {
           </div>
         </motion.div>
 
-        {/* ── Content ─────────────────────────────────────────────────── */}
+        {/* Content */}
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -411,7 +408,7 @@ export default function PackagesListPage() {
           </motion.div>
         )}
 
-        {/* ── Footer count ────────────────────────────────────────────── */}
+        {/* Footer count */}
         {!isLoading && filtered.length > 0 && (
           <p className="text-sm text-muted-foreground text-center mt-8">
             Showing {filtered.length} of {agencyPackages.length} package
@@ -420,7 +417,7 @@ export default function PackagesListPage() {
         )}
       </div>
 
-      {/* ── Delete modal ─────────────────────────────────────────────── */}
+      {/* Delete modal */}
       <AnimatePresence>
         {deleteTarget && (
           <DeleteModal

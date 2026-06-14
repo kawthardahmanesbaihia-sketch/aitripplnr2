@@ -87,8 +87,7 @@ export interface DestinationEntry {
   mapCenter: { lat: number; lng: number };
 }
 
-// ─── Destinations ─────────────────────────────────────────────────────────────
-
+// Destinations
 export const DESTINATIONS: DestinationEntry[] = [
   {
     id: 'japan',
@@ -1092,7 +1091,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: -8.3405, lng: 115.0920 },
   },
 
-  // ─── Maldives ────────────────────────────────────────────────────────────────
+  // Maldives
   {
     id: 'maldives',
     name: 'Maldives',
@@ -1179,7 +1178,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 3.2028, lng: 73.2207 },
   },
 
-  // ─── Switzerland ─────────────────────────────────────────────────────────────
+  // Switzerland
   {
     id: 'switzerland',
     name: 'Switzerland',
@@ -1266,7 +1265,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 46.8182, lng: 8.2275 },
   },
 
-  // ─── New Zealand ─────────────────────────────────────────────────────────────
+  // New Zealand
   {
     id: 'newzealand',
     name: 'New Zealand',
@@ -1353,7 +1352,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: -40.9006, lng: 174.8860 },
   },
 
-  // ─── Jordan ───────────────────────────────────────────────────────────────────
+  // Jordan
   {
     id: 'jordan',
     name: 'Jordan',
@@ -1440,7 +1439,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 30.5852, lng: 36.2384 },
   },
 
-  // ─── Iceland ─────────────────────────────────────────────────────────────────
+  // Iceland
   {
     id: 'iceland',
     name: 'Iceland',
@@ -1527,7 +1526,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 64.9631, lng: -19.0208 },
   },
 
-  // ─── Norway ───────────────────────────────────────────────────────────────────
+  // Norway
   {
     id: 'norway',
     name: 'Norway',
@@ -1614,7 +1613,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 60.4720, lng: 8.4689 },
   },
 
-  // ─── South Africa ─────────────────────────────────────────────────────────────
+  // South Africa
   {
     id: 'southafrica',
     name: 'South Africa',
@@ -1701,7 +1700,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: -30.5595, lng: 22.9375 },
   },
 
-  // ─── Finland ─────────────────────────────────────────────────────────────────
+  // Finland
   {
     id: 'finland',
     name: 'Finland',
@@ -1788,7 +1787,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 61.9241, lng: 25.7482 },
   },
 
-  // ─── Sweden ───────────────────────────────────────────────────────────────────
+  // Sweden
   {
     id: 'sweden',
     name: 'Sweden',
@@ -1875,7 +1874,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 60.1282, lng: 18.6435 },
   },
 
-  // ─── Canada ───────────────────────────────────────────────────────────────────
+  // Canada
   {
     id: 'canada',
     name: 'Canada',
@@ -1962,7 +1961,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: 56.1304, lng: -106.3468 },
   },
 
-  // ─── Kenya ────────────────────────────────────────────────────────────────────
+  // Kenya
   {
     id: 'kenya',
     name: 'Kenya',
@@ -2049,7 +2048,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: -0.0236, lng: 37.9062 },
   },
 
-  // ─── Tanzania ─────────────────────────────────────────────────────────────────
+  // Tanzania
   {
     id: 'tanzania',
     name: 'Tanzania',
@@ -2136,7 +2135,7 @@ export const DESTINATIONS: DestinationEntry[] = [
     mapCenter: { lat: -6.3690, lng: 34.8888 },
   },
 
-  // ─── Seychelles ───────────────────────────────────────────────────────────────
+  // Seychelles
   {
     id: 'seychelles',
     name: 'Seychelles',
@@ -2224,8 +2223,7 @@ export const DESTINATIONS: DestinationEntry[] = [
   },
 ];
 
-// ─── Lookup helpers ─────────────────────────────────────────────────────────────
-
+// Lookup helpers
 export function getDestination(id: string): DestinationEntry | undefined {
   return DESTINATIONS.find(d => d.id === id);
 }
