@@ -58,6 +58,20 @@ interface MarketSupplyRow extends RowDataPacket {
   package_count: number | bigint
 }
 
+interface PackageScoreRow extends RowDataPacket {
+  package_id:         number
+  package_title:      string
+  destination:        string
+  price:              string
+  status:             string
+  description_length: number | null
+  has_services:       number
+  tag_count:          number
+  total_requests:     number | bigint
+  acceptance_rate:    number | string | null
+  dest_avg_price:     string | null
+}
+
 // GET /api/analytics/bookings
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
@@ -79,6 +93,7 @@ export async function GET(req: NextRequest) {
     [supplyRows],
     [marketDemandRows],
     [marketSupplyRows],
+    [packageScoreRows],
   ] = await Promise.all([
 
     // A. KPI summary
@@ -187,6 +202,42 @@ export async function GET(req: NextRequest) {
       []
     ),
 
+    // I. Package Performance Score — per-package scoring for this agency's active/featured packages
+    db.query<PackageScoreRow[]>(
+      `SELECT
+         p.id                                                                        AS package_id,
+         p.title                                                                     AS package_title,
+         p.destination,
+         p.price,
+         p.status,
+         CHAR_LENGTH(p.description)                                                  AS description_length,
+         CASE WHEN p.included_services IS NOT NULL
+                   AND TRIM(p.included_services) != ''
+              THEN 1 ELSE 0 END                                                      AS has_services,
+         COALESCE(JSON_LENGTH(p.tags), 0)                                            AS tag_count,
+         COALESCE(br.total_requests, 0)                                              AS total_requests,
+         COALESCE(br.acceptance_rate, 0)                                             AS acceptance_rate,
+         COALESCE(da.avg_price, p.price)                                             AS dest_avg_price
+       FROM packages p
+       LEFT JOIN (
+         SELECT package_id,
+                COUNT(*)                                                             AS total_requests,
+                ROUND(100.0 * SUM(status = 'accepted') / COUNT(*), 2)              AS acceptance_rate
+         FROM package_booking_requests
+         GROUP BY package_id
+       ) br ON br.package_id = p.id
+       LEFT JOIN (
+         SELECT destination, AVG(price)                                              AS avg_price
+         FROM packages
+         WHERE status IN ('active', 'featured')
+         GROUP BY destination
+       ) da ON da.destination = p.destination
+       WHERE p.agency_user_id = ?
+         AND p.status IN ('active', 'featured')
+       ORDER BY p.created_at DESC`,
+      [uid]
+    ),
+
   ])
 
   const kpi = kpiRows[0] ?? { total: 0, accepted: 0, pending: 0, declined: 0, unique_travelers: 0 }
@@ -243,5 +294,39 @@ export async function GET(req: NextRequest) {
       destination:   r.destination,
       package_count: Number(r.package_count),
     })),
+    packageScores: (packageScoreRows as PackageScoreRow[])
+      .map(r => {
+        // Completeness (0–35)
+        const completeness =
+          ((r.description_length ?? 0) > 50 ? 15 : 0) +
+          (r.has_services ? 10 : 0) +
+          (r.tag_count >= 3 ? 10 : 0)
+
+        // Popularity (0–30)
+        const requests  = Number(r.total_requests)
+        const rate      = Number(r.acceptance_rate ?? 0)
+        const popularity = Math.min(requests / 5, 1) * 20 + (rate * 10 / 100)
+
+        // Price Competitiveness (0–25)
+        const price    = parseFloat(String(r.price))
+        const destAvg  = parseFloat(String(r.dest_avg_price ?? r.price))
+        const ratio    = destAvg > 0 ? price / destAvg : 1
+        const priceScore = Math.max(0, Math.min(25, 25 * (1.5 - ratio)))
+
+        // Status Bonus (0–10)
+        const statusBonus = r.status === "featured" ? 10 : 5
+
+        return {
+          package_id:   String(r.package_id),
+          title:        r.package_title,
+          destination:  r.destination,
+          score:        Math.round(completeness + popularity + priceScore + statusBonus),
+          completeness,
+          popularity:   Math.round(popularity),
+          price_score:  Math.round(priceScore),
+          status_bonus: statusBonus,
+        }
+      })
+      .sort((a, b) => b.score - a.score),
   })
 }

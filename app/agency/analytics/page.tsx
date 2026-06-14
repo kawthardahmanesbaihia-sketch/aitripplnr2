@@ -58,6 +58,16 @@ interface AnalyticsData {
     destination:   string
     package_count: number
   }>
+  packageScores: Array<{
+    package_id:   string
+    title:        string
+    destination:  string
+    score:        number
+    completeness: number
+    popularity:   number
+    price_score:  number
+    status_bonus: number
+  }>
 }
 
 // Constants
@@ -202,7 +212,7 @@ function EmptyState() {
 
 // Analytics content
 function AnalyticsContent({ data }: { data: AnalyticsData }) {
-  const { kpi, topPackages, topDestinations, trend, conversion, supply, marketDemand, marketSupply } = data
+  const { kpi, topPackages, topDestinations, trend, conversion, supply, marketDemand, marketSupply, packageScores } = data
 
   const trendData = useMemo(() => buildTrend(trend), [trend])
 
@@ -258,6 +268,8 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
         .slice(0, 5),
     [marketDemandSupplyData]
   )
+
+  const opportunityMaxScore = topOpportunityDestinations[0]?.score ?? 1
 
   if (kpi.total === 0) return <EmptyState />
 
@@ -409,6 +421,18 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
         </SectionCard>
       )}
 
+      {/* Market Intelligence section divider */}
+      <div className="relative flex items-center gap-4 py-2">
+        <div className="flex-1 border-t border-border" />
+        <div className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-1.5">
+          <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Market Intelligence
+          </span>
+        </div>
+        <div className="flex-1 border-t border-border" />
+      </div>
+
       {/* Market Insights — platform-wide demand vs supply across all agencies */}
       {marketDemandSupplyData.length > 0 && (
         <SectionCard
@@ -417,6 +441,28 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
           subtitle="Platform-wide booking demand vs available packages across all agencies"
           delay={0.64}
         >
+          <div className="flex items-center gap-6 mb-5 px-1">
+            <div className="text-center">
+              <p className="text-2xl font-bold tabular-nums">
+                {marketDemandSupplyData.reduce((s, d) => s + d.Demand, 0)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">Platform Requests</p>
+            </div>
+            <div className="h-8 w-px bg-border shrink-0" />
+            <div className="text-center">
+              <p className="text-2xl font-bold tabular-nums">
+                {marketDemandSupplyData.reduce((s, d) => s + d.Supply, 0)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">Platform Packages</p>
+            </div>
+            <div className="h-8 w-px bg-border shrink-0" />
+            <div className="text-center">
+              <p className="text-2xl font-bold tabular-nums text-red-500">
+                {marketOpportunities.length}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">Uncovered</p>
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={Math.max(160, marketDemandSupplyData.length * 44)}>
             <BarChart
               data={marketDemandSupplyData}
@@ -476,28 +522,47 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {topOpportunityDestinations.map(d => (
+                {topOpportunityDestinations.map((d, i) => (
                   <tr key={d.name}>
                     <td className="py-3 pr-4">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="font-medium leading-snug">{d.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-muted-foreground/50 w-5 text-right shrink-0">
+                          #{i + 1}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="font-medium leading-snug">{d.name}</span>
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 text-right tabular-nums text-muted-foreground">{d.Demand}</td>
                     <td className="py-3 text-right tabular-nums text-muted-foreground">{d.Supply}</td>
                     <td className="py-3 text-right tabular-nums font-semibold">
-                      <span
-                        className={
-                          d.score >= 5
-                            ? "text-red-500"
-                            : d.score >= 2
-                            ? "text-amber-600"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {d.score.toFixed(1)}×
-                      </span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span
+                          className={
+                            d.score >= 5
+                              ? "text-red-500"
+                              : d.score >= 2
+                              ? "text-amber-600"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {d.score.toFixed(1)}×
+                        </span>
+                        <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              d.score >= 5
+                                ? "bg-red-500"
+                                : d.score >= 2
+                                ? "bg-amber-500"
+                                : "bg-primary"
+                            }`}
+                            style={{ width: `${Math.min(100, (d.score / opportunityMaxScore) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -555,6 +620,77 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
                           className="h-full rounded-full bg-primary transition-all"
                           style={{ width: `${Math.min(100, row.acceptance_rate)}%` }}
                         />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      )}
+
+      {/* Package Performance Score */}
+      {packageScores.length > 0 && (
+        <SectionCard
+          icon={Package}
+          title="Package Performance Score"
+          subtitle="Quality ranking of your active and featured packages (0–100)"
+          delay={0.76}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-8">#</th>
+                  <th className="text-left pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Package</th>
+                  <th className="text-left pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">Destination</th>
+                  <th className="text-right pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-36">Score</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {packageScores.map((d, i) => (
+                  <tr key={d.package_id}>
+                    <td className="py-3 pr-2 align-top">
+                      <span className="text-xs font-bold text-muted-foreground/50">#{i + 1}</span>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <p className="font-medium leading-snug line-clamp-1 mb-1.5">{d.title}</p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">Completeness {d.completeness}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">Popularity {d.popularity}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">Price Match {d.price_score}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">Status {d.status_bonus}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4 hidden md:table-cell align-top">
+                      <span className="text-muted-foreground">{d.destination}</span>
+                    </td>
+                    <td className="py-3 align-top">
+                      <div className="flex flex-col items-end gap-1.5">
+                        <span
+                          className={`text-sm font-bold tabular-nums ${
+                            d.score >= 70
+                              ? "text-green-600"
+                              : d.score >= 40
+                              ? "text-amber-600"
+                              : "text-red-500"
+                          }`}
+                        >
+                          {d.score}/100
+                        </span>
+                        <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              d.score >= 70
+                                ? "bg-green-500"
+                                : d.score >= 40
+                                ? "bg-amber-500"
+                                : "bg-red-500"
+                            }`}
+                            style={{ width: `${d.score}%` }}
+                          />
+                        </div>
                       </div>
                     </td>
                   </tr>
