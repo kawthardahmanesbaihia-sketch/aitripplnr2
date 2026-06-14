@@ -43,6 +43,11 @@ interface ConversionRow extends RowDataPacket {
   acceptance_rate: number | string
 }
 
+interface SupplyRow extends RowDataPacket {
+  destination:   string
+  package_count: number | bigint
+}
+
 // GET /api/analytics/bookings
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
@@ -61,6 +66,7 @@ export async function GET(req: NextRequest) {
     [topDestRows],
     [trendRows],
     [convRows],
+    [supplyRows],
   ] = await Promise.all([
 
     // A. KPI summary
@@ -136,6 +142,19 @@ export async function GET(req: NextRequest) {
       [uid]
     ),
 
+    // F. Supply — active/featured packages per destination for this agency
+    db.query<SupplyRow[]>(
+      `SELECT
+         destination,
+         COUNT(*) AS package_count
+       FROM packages
+       WHERE agency_user_id = ?
+         AND status IN ('active', 'featured')
+       GROUP BY destination
+       ORDER BY package_count DESC`,
+      [uid]
+    ),
+
   ])
 
   const kpi = kpiRows[0] ?? { total: 0, accepted: 0, pending: 0, declined: 0, unique_travelers: 0 }
@@ -179,6 +198,10 @@ export async function GET(req: NextRequest) {
       total:           Number(r.total),
       accepted:        Number(r.accepted),
       acceptance_rate: Number(r.acceptance_rate),
+    })),
+    supply: (supplyRows as SupplyRow[]).map(r => ({
+      destination:   r.destination,
+      package_count: Number(r.package_count),
     })),
   })
 }

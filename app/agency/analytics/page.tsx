@@ -13,7 +13,7 @@ import {
 import Link from "next/link"
 import {
   BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from "recharts"
 
@@ -45,6 +45,10 @@ interface AnalyticsData {
     total:           number
     accepted:        number
     acceptance_rate: number
+  }>
+  supply: Array<{
+    destination:   string
+    package_count: number
   }>
 }
 
@@ -190,7 +194,7 @@ function EmptyState() {
 
 // Analytics content
 function AnalyticsContent({ data }: { data: AnalyticsData }) {
-  const { kpi, topPackages, topDestinations, trend, conversion } = data
+  const { kpi, topPackages, topDestinations, trend, conversion, supply } = data
 
   const trendData = useMemo(() => buildTrend(trend), [trend])
 
@@ -208,6 +212,20 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
       Requests: d.total_requests,
     })),
     [topDestinations]
+  )
+
+  const demandSupplyData = useMemo(() => {
+    const supplyMap = new Map(supply.map(s => [s.destination, s.package_count]))
+    return topDestinations.map(d => ({
+      name:   truncate(d.package_destination, 20),
+      Demand: d.total_requests,
+      Supply: supplyMap.get(d.package_destination) ?? 0,
+    }))
+  }, [topDestinations, supply])
+
+  const opportunities = useMemo(
+    () => demandSupplyData.filter(d => d.Demand > 0 && d.Supply === 0),
+    [demandSupplyData]
   )
 
   if (kpi.total === 0) return <EmptyState />
@@ -311,6 +329,54 @@ function AnalyticsContent({ data }: { data: AnalyticsData }) {
           )}
         </SectionCard>
       </div>
+
+      {/* Demand vs Supply */}
+      {demandSupplyData.length > 0 && (
+        <SectionCard
+          icon={TrendingUp}
+          title="Demand vs Supply"
+          subtitle="Booking request demand compared to your active packages per destination"
+          delay={0.58}
+        >
+          <ResponsiveContainer width="100%" height={Math.max(160, demandSupplyData.length * 44)}>
+            <BarChart
+              data={demandSupplyData}
+              layout="vertical"
+              margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+              <XAxis type="number" tick={AXIS_TICK} tickLine={false} axisLine={false} allowDecimals={false} />
+              <YAxis type="category" dataKey="name" tick={AXIS_TICK} tickLine={false} axisLine={false} width={90} />
+              <Tooltip {...TIP_STYLE} />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+              <Bar dataKey="Demand" fill={COLORS[1]} radius={[0, 4, 4, 0]} maxBarSize={16} />
+              <Bar dataKey="Supply" fill={COLORS[0]} radius={[0, 4, 4, 0]} maxBarSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+
+          {opportunities.length > 0 && (
+            <div className="mt-5 pt-5 border-t border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Opportunities — Destinations with demand but no packages
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {opportunities.map(o => (
+                  <span
+                    key={o.name}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 px-3 py-1 text-xs font-medium"
+                  >
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    {o.name}
+                    <span className="ml-1 opacity-70">
+                      · {o.Demand} request{o.Demand !== 1 ? "s" : ""}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+      )}
 
       {/* Conversion metrics table */}
       {conversion.length > 0 && (
