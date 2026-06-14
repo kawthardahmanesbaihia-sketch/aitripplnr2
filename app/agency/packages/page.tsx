@@ -21,7 +21,7 @@ export default function CreatePackagePage() {
     if (!user) return
     setSubmitting(true)
     try {
-      addPackage(
+      await addPackage(
         {
           title:            values.title,
           destination:      values.destination,

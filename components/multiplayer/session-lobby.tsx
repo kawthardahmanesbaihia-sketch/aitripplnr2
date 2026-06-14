@@ -71,16 +71,16 @@ export function SessionLobby() {
         animate={{ opacity: 1, y: 0 }}
         className="mx-auto max-w-md"
       >
-        <Card className="border-2 bg-card/50 backdrop-blur-sm p-8">
-          <h2 className="mb-4 text-2xl font-bold text-center">Session Created!</h2>
+        <Card className="border-2 bg-card/50 backdrop-blur-sm p-5">
+          <h2 className="mb-3 text-xl font-bold text-center">Room Created!</h2>
 
-          <p className="text-center text-muted-foreground mb-6">
-            Share this code with other players to join your session
+          <p className="text-center text-muted-foreground mb-4 text-sm">
+            Share this code with your travel companions to join the room
           </p>
 
-          <div className="mb-6 p-4 bg-primary/10 rounded-lg border-2 border-primary">
-            <p className="text-xs text-muted-foreground mb-2 text-center">Session ID</p>
-            <p className="text-2xl font-mono font-bold text-center text-primary mb-4">
+          <div className="mb-4 p-3 bg-primary/10 rounded-lg border-2 border-primary">
+            <p className="text-xs text-muted-foreground mb-2 text-center">Room ID</p>
+            <p className="text-2xl font-mono font-bold text-center text-primary mb-3">
               {connectedSessionId}
             </p>
             <Button
@@ -97,14 +97,14 @@ export function SessionLobby() {
               ) : (
                 <>
                   <Copy className="mr-2 h-4 w-4" />
-                  Copy Session ID
+                  Copy Room ID
                 </>
               )}
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center mb-6">
-            Waiting for players to join...
+          <p className="text-xs text-muted-foreground text-center mb-4">
+            Waiting for your travel companions...
           </p>
 
           <Button
@@ -112,7 +112,7 @@ export function SessionLobby() {
             className="w-full"
             size="lg"
           >
-            Continue to Session
+            Enter Planning Room
           </Button>
         </Card>
       </motion.div>
@@ -120,23 +120,23 @@ export function SessionLobby() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-3">
       {/* Mode Selection */}
       {mode === null && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
+          className="space-y-3"
         >
-          <h2 className="text-2xl font-bold text-center mb-6">
-            Play Together
+          <h2 className="text-lg font-bold text-center mb-1">
+            Travel Planning Room
           </h2>
 
-          <p className="text-center text-muted-foreground mb-8">
-            Explore travel destinations with friends in real-time
+          <p className="text-center text-muted-foreground mb-3 text-sm">
+            Plan your trip together with friends in a shared collaborative room.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <motion.button
               whileHover={{ scale: isFirebaseInitialized ? 1.02 : 1 }}
               whileTap={{ scale: isFirebaseInitialized ? 0.98 : 1 }}
@@ -144,14 +144,14 @@ export function SessionLobby() {
               className="group"
               disabled={!isFirebaseInitialized}
             >
-              <Card className={`border-2 p-8 h-full transition-all ${
-                isFirebaseInitialized 
-                  ? 'hover:border-primary/50 hover:shadow-lg cursor-pointer' 
+              <Card className={`border-2 p-4 h-full transition-all text-left ${
+                isFirebaseInitialized
+                  ? 'hover:border-primary/50 hover:shadow-lg cursor-pointer'
                   : 'opacity-50 cursor-not-allowed'
               }`}>
-                <h3 className="text-xl font-bold mb-2">Create Session</h3>
+                <h3 className="text-base font-bold mb-1">Create Room</h3>
                 <p className="text-sm text-muted-foreground">
-                  Start a new multiplayer session and invite friends
+                  Create a shared travel planning room and invite friends
                 </p>
               </Card>
             </motion.button>
@@ -163,14 +163,14 @@ export function SessionLobby() {
               className="group"
               disabled={!isFirebaseInitialized}
             >
-              <Card className={`border-2 p-8 h-full transition-all ${
-                isFirebaseInitialized 
-                  ? 'hover:border-primary/50 hover:shadow-lg cursor-pointer' 
+              <Card className={`border-2 p-4 h-full transition-all text-left ${
+                isFirebaseInitialized
+                  ? 'hover:border-primary/50 hover:shadow-lg cursor-pointer'
                   : 'opacity-50 cursor-not-allowed'
               }`}>
-                <h3 className="text-xl font-bold mb-2">Join Session</h3>
+                <h3 className="text-base font-bold mb-1">Join Room</h3>
                 <p className="text-sm text-muted-foreground">
-                  Join a friend&apos;s session with a session ID
+                  Join an existing travel planning room using a Room ID
                 </p>
               </Card>
             </motion.button>
@@ -185,21 +185,21 @@ export function SessionLobby() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
         >
-          <Card className="border-2 bg-card/50 backdrop-blur-sm p-8">
+          <Card className="border-2 bg-card/50 backdrop-blur-sm p-5">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setMode(null)}
-              className="mb-4"
+              className="mb-3"
             >
               ← Back
             </Button>
 
-            <h2 className="mb-6 text-2xl font-bold">Create Session</h2>
+            <h2 className="mb-4 text-lg font-bold">Create Room</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <label className="block text-sm font-semibold mb-2">Your Name</label>
+                <label className="block text-sm font-semibold mb-1.5">Your Name</label>
                 <Input
                   placeholder="Enter your name"
                   value={username}
@@ -209,7 +209,7 @@ export function SessionLobby() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Group Size</label>
+                <label className="block text-sm font-semibold mb-1.5">Group Size</label>
                 <Input
                   type="number"
                   min="2"
@@ -240,7 +240,7 @@ export function SessionLobby() {
                     Creating...
                   </>
                 ) : (
-                  'Create Session'
+                  'Create Room'
                 )}
               </Button>
             </div>
@@ -255,21 +255,21 @@ export function SessionLobby() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
         >
-          <Card className="border-2 bg-card/50 backdrop-blur-sm p-8">
+          <Card className="border-2 bg-card/50 backdrop-blur-sm p-5">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setMode(null)}
-              className="mb-4"
+              className="mb-3"
             >
               ← Back
             </Button>
 
-            <h2 className="mb-6 text-2xl font-bold">Join Session</h2>
+            <h2 className="mb-4 text-lg font-bold">Join Room</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <label className="block text-sm font-semibold mb-2">Your Name</label>
+                <label className="block text-sm font-semibold mb-1.5">Your Name</label>
                 <Input
                   placeholder="Enter your name"
                   value={username}
@@ -279,9 +279,9 @@ export function SessionLobby() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Session ID</label>
+                <label className="block text-sm font-semibold mb-1.5">Room ID</label>
                 <Input
-                  placeholder="Enter session ID from your friend"
+                  placeholder="Enter Room ID from your friend"
                   value={sessionId}
                   onChange={(e) => setSessionIdInput(e.target.value)} // ✅ هنا تصحيح
                   disabled={isLoading}
@@ -307,7 +307,7 @@ export function SessionLobby() {
                     Joining...
                   </>
                 ) : (
-                  'Join Session'
+                  'Join Room'
                 )}
               </Button>
             </div>

@@ -274,6 +274,7 @@ export async function POST(request: NextRequest) {
       geminiSummary,
       destinationImg,
       transitHubsResult,
+      googleActivitiesResult,
     ] = await Promise.allSettled([
 
       // 1 — Google Hotels (New Places API) — primary source
@@ -311,6 +312,13 @@ export async function POST(request: NextRequest) {
       // 6 — Google Transit Hubs (for Transport section)
       fetchGoogleTransitHubs(targetCity, countryName).catch((e) => {
         console.error("[destination] Google Transit Hubs error:", e); return []
+      }),
+
+      // 7 — Google Activities — always fetched in parallel for map-marker coordinates.
+      //     HotelbedsActivity has no lat/lng, so Google is the only coordinate source
+      //     for attraction markers regardless of which source wins the display list.
+      fetchGoogleActivities(targetCity, countryName).catch((e) => {
+        console.error("[destination] Google Activities (markers) error:", e); return []
       }),
     ])
 
@@ -383,14 +391,16 @@ export async function POST(request: NextRequest) {
 
     // ── Unwrap settled results ────────────────────────────────────────────────
 
-    const googleHotelsList = (googleHotelsResult.status  === "fulfilled" ? googleHotelsResult.value  : []) as GooglePlaceHotel[]
-    const restaurants      = (googleRestaurants.status   === "fulfilled" ? googleRestaurants.value   : []) as GooglePlaceRestaurant[]
-    const rawActivities    = (hotelbedsActivities.status === "fulfilled" ? hotelbedsActivities.value : []) as HotelbedsActivity[]
-    const summaryData      = (geminiSummary.status       === "fulfilled" ? geminiSummary.value       : null)
-    const destImgUrl       = (destinationImg.status      === "fulfilled" ? destinationImg.value      : null) ?? ""
-    const transitHubs      = (transitHubsResult.status   === "fulfilled" ? transitHubsResult.value   : []) as GoogleTransitHub[]
+    const googleHotelsList     = (googleHotelsResult.status     === "fulfilled" ? googleHotelsResult.value     : []) as GooglePlaceHotel[]
+    const restaurants          = (googleRestaurants.status      === "fulfilled" ? googleRestaurants.value      : []) as GooglePlaceRestaurant[]
+    const rawActivities        = (hotelbedsActivities.status    === "fulfilled" ? hotelbedsActivities.value    : []) as HotelbedsActivity[]
+    const summaryData          = (geminiSummary.status          === "fulfilled" ? geminiSummary.value          : null)
+    const destImgUrl           = (destinationImg.status         === "fulfilled" ? destinationImg.value         : null) ?? ""
+    const transitHubs          = (transitHubsResult.status      === "fulfilled" ? transitHubsResult.value      : []) as GoogleTransitHub[]
+    const googleActivitiesList = (googleActivitiesResult.status === "fulfilled" ? googleActivitiesResult.value : []) as GooglePlaceActivity[]
 
     console.log(`[destination] Google Hotels: ${googleHotelsList.length} hotels`)
+    console.log(`[destination] Google Activities (map markers): ${googleActivitiesList.length} activities`)
 
     // HotelBeds Hotels fallback — only fetched when Google returned nothing
     let hotels: HotelbedsHotel[] = []
@@ -399,15 +409,6 @@ export async function POST(request: NextRequest) {
         console.error("[destination] HotelBeds Hotels fallback error:", e); return []
       })
       console.log(`[destination] HotelBeds Hotels fallback: ${hotels.length} hotels`)
-    }
-
-    // Google Activities fallback — only fetched when HotelBeds returned nothing
-    let googleActivitiesList: GooglePlaceActivity[] = []
-    if (rawActivities.length === 0) {
-      googleActivitiesList = await fetchGoogleActivities(targetCity, countryName).catch((e) => {
-        console.error("[destination] Google Activities fallback error:", e); return []
-      })
-      console.log(`[destination] Google Activities fallback: ${googleActivitiesList.length} activities`)
     }
 
     // Resolve final data sets — HotelBeds first, Google fallback second

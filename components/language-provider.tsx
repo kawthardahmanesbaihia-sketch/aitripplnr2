@@ -27,7 +27,7 @@ const translations = {
     uploadImages: "Share Your Vibe",
     uploadImagesDesc: "Upload travel images on the Explore page and our AI reads your style instantly",
     aiAnalysis: "AI Analysis",
-    aiAnalysisDesc: "Our vision model analyzes your preferences and travel style",
+    aiAnalysisDesc: "Helping travelers and agencies make better decisions",
     getResults: "Get Results",
     getResultsDesc: "Receive personalized trip recommendations instantly",
     aboutThisProject: "About This Project",

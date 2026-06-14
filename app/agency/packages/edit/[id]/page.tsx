@@ -34,7 +34,7 @@ export default function EditPackagePage() {
     if (!user || !pkg) return
     setSubmitting(true)
     try {
-      updatePackage(pkg.id, {
+      await updatePackage(pkg.id, {
         title:            values.title,
         destination:      values.destination,
         country:          values.country          || undefined,

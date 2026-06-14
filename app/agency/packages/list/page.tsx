@@ -124,9 +124,9 @@ export default function PackagesListPage() {
     })
   }, [agencyPackages, search, filter])
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
-    deletePackage(deleteTarget.id)
+    await deletePackage(deleteTarget.id)
     setDeleteTarget(null)
   }
 
