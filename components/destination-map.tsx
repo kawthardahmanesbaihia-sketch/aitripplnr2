@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { MapPin, Hotel, Utensils, Camera } from "lucide-react"
+import type { TransitLine } from "@/lib/transport-client"
 
 // Extend Window interface to include Leaflet
 declare global {
@@ -27,13 +27,30 @@ interface MapMarker {
   }
 }
 
-interface DestinationMapProps {
-  markers: MapMarker[]
-  countryName: string
+// Per-mode colours for transit polylines
+const LINE_COLORS: Record<string, string> = {
+  metro:      "#2563EB",  // blue
+  bus:        "#16A34A",  // green
+  rail:       "#9333EA",  // purple
+  tram:       "#EA580C",  // orange
+  ferry:      "#0891B2",  // cyan
+  cable_car:  "#7C3AED",  // violet
+  funicular:  "#7C3AED",
+  trolleybus: "#0D9488",  // teal
+  other:      "#6B7280",  // gray
 }
 
-export function DestinationMap({ markers, countryName }: DestinationMapProps) {
-  const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null)
+function lineColor(mode: string, overrideColor?: string): string {
+  return overrideColor || LINE_COLORS[mode] || LINE_COLORS.other
+}
+
+interface DestinationMapProps {
+  markers:      MapMarker[]
+  countryName:  string
+  transitLines?: TransitLine[]
+}
+
+export function DestinationMap({ markers, countryName, transitLines }: DestinationMapProps) {
   const [mapError, setMapError] = useState<string | null>(null)
   const mapInstanceRef = useRef<any>(null)
 
@@ -90,7 +107,10 @@ export function DestinationMap({ markers, countryName }: DestinationMapProps) {
 
   const initializeMap = () => {
     try {
-      if (!markers || markers.length === 0) {
+      const hasMarkers = markers && markers.length > 0
+      const hasLines   = transitLines && transitLines.length > 0
+
+      if (!hasMarkers && !hasLines) {
         setMapError('No locations to display on map')
         return
       }
@@ -98,78 +118,90 @@ export function DestinationMap({ markers, countryName }: DestinationMapProps) {
       // Guard against double-initialisation (React Strict Mode / remounts)
       if (mapInstanceRef.current) return
 
-      // Get center point from markers or use default
-      const centerLat = markers[0]?.location.lat || 0
-      const centerLng = markers[0]?.location.lng || 0
+      // Derive centre from markers first, then from first transit line coordinate
+      const centerLat = markers?.[0]?.location.lat
+        ?? transitLines?.[0]?.coordinates?.[0]?.lat
+        ?? 0
+      const centerLng = markers?.[0]?.location.lng
+        ?? transitLines?.[0]?.coordinates?.[0]?.lng
+        ?? 0
 
-      // Initialize map
       const map = window.L.map('map-container', {
         center: [centerLat, centerLng],
         zoom: 13,
-        zoomControl: true
+        zoomControl: true,
       })
       mapInstanceRef.current = map
 
-      // Add tile layer
       window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
+        maxZoom: 19,
       }).addTo(map)
 
-      // Add markers
-      markers.forEach((marker) => {
-        const emoji = marker.type === 'hotel' ? '🏨' : marker.type === 'restaurant' ? '🍽️' : '📸'
-        const bgColor = marker.type === 'hotel' ? '#3b82f6' : marker.type === 'restaurant' ? '#ef4444' : '#22c55e'
+      // ── Draw transit polylines (below markers so markers are on top) ────────
+      const allBoundObjects: any[] = []
 
-        const icon = window.L.divIcon({
-          html: `
-            <div style="
-              background: ${bgColor};
-              color: white;
-              border-radius: 50%;
-              width: 36px;
-              height: 36px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 18px;
-              box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-              border: 2px solid white;
-            ">${emoji}</div>
-          `,
-          className: 'custom-marker',
-          iconSize: [36, 36],
-          iconAnchor: [18, 18],
-        })
+      if (hasLines) {
+        for (const line of transitLines!) {
+          if (line.coordinates.length < 2) continue
+          const latlngs = line.coordinates.map(c => [c.lat, c.lng] as [number, number])
+          const color   = lineColor(line.mode, line.color)
+          const poly    = window.L.polyline(latlngs, {
+            color,
+            weight:  4,
+            opacity: 0.75,
+          }).addTo(map)
 
-        const ratingHtml  = marker.info.rating  ? `<p style="margin:4px 0">⭐ ${marker.info.rating}/5</p>` : ""
-        const priceHtml   = marker.info.price   ? `<p style="margin:4px 0">💰 ${marker.info.price}</p>` : ""
-        const cuisineHtml = marker.info.cuisine ? `<p style="margin:4px 0">🍴 ${marker.info.cuisine}</p>` : ""
-        const typeLabel   = marker.type === 'hotel' ? 'Hotel' : marker.type === 'restaurant' ? 'Restaurant' : 'Attraction'
+          const modeLabel = line.mode.replace(/_/g, " ")
+          poly.bindPopup(
+            `<div style="font-family:system-ui,sans-serif;padding:6px 2px">` +
+            `<p style="margin:0 0 2px;font-size:10px;color:#888;text-transform:uppercase">${modeLabel}</p>` +
+            `<b style="font-size:13px">${line.name}</b>` +
+            `</div>`
+          )
+          allBoundObjects.push(poly)
+        }
+      }
 
-        const popupContent = `
-          <div style="min-width:200px;padding:10px;font-family:system-ui,sans-serif">
-            <p style="margin:0 0 2px 0;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em">${typeLabel}</p>
-            <h3 style="margin:0 0 6px 0;font-weight:700;font-size:14px">${marker.name}</h3>
-            ${ratingHtml}${priceHtml}${cuisineHtml}
-          </div>
-        `
+      // ── Add place markers (hotels, restaurants, attractions) ────────────────
+      if (hasMarkers) {
+        for (const marker of markers!) {
+          const emoji   = marker.type === 'hotel' ? '🏨' : marker.type === 'restaurant' ? '🍽️' : '📸'
+          const bgColor = marker.type === 'hotel' ? '#3b82f6' : marker.type === 'restaurant' ? '#ef4444' : '#22c55e'
 
-        const leafletMarker = window.L.marker([marker.location.lat, marker.location.lng], {
-          icon: icon
-        }).addTo(map)
+          const icon = window.L.divIcon({
+            html: `<div style="background:${bgColor};color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,0.4);border:2px solid white">${emoji}</div>`,
+            className:  'custom-marker',
+            iconSize:   [36, 36],
+            iconAnchor: [18, 18],
+          })
 
-        leafletMarker.bindPopup(popupContent)
+          const ratingHtml  = marker.info.rating  ? `<p style="margin:4px 0">⭐ ${marker.info.rating}/5</p>` : ""
+          const priceHtml   = marker.info.price   ? `<p style="margin:4px 0">💰 ${marker.info.price}</p>` : ""
+          const cuisineHtml = marker.info.cuisine ? `<p style="margin:4px 0">🍴 ${marker.info.cuisine}</p>` : ""
+          const typeLabel   = marker.type === 'hotel' ? 'Hotel' : marker.type === 'restaurant' ? 'Restaurant' : 'Attraction'
 
-        // Store marker reference
-        ;(leafletMarker as any).markerData = marker
-      })
+          const leafletMarker = window.L.marker(
+            [marker.location.lat, marker.location.lng],
+            { icon },
+          ).addTo(map)
 
-      // Fit map to show all markers
-      const group = window.L.featureGroup(markers.map(m => 
-        window.L.marker([m.location.lat, m.location.lng])
-      ))
-      map.fitBounds(group.getBounds().pad(0.1))
+          leafletMarker.bindPopup(
+            `<div style="min-width:200px;padding:10px;font-family:system-ui,sans-serif">` +
+            `<p style="margin:0 0 2px;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em">${typeLabel}</p>` +
+            `<h3 style="margin:0 0 6px;font-weight:700;font-size:14px">${marker.name}</h3>` +
+            `${ratingHtml}${priceHtml}${cuisineHtml}` +
+            `</div>`
+          )
+          allBoundObjects.push(leafletMarker)
+        }
+      }
+
+      // ── Fit bounds to everything on the map ─────────────────────────────────
+      if (allBoundObjects.length > 0) {
+        const group = window.L.featureGroup(allBoundObjects)
+        map.fitBounds(group.getBounds().pad(0.1))
+      }
 
       setMapError(null)
     } catch (error) {
@@ -198,56 +230,68 @@ export function DestinationMap({ markers, countryName }: DestinationMapProps) {
   return (
     <Card className="border-2 bg-card/50 backdrop-blur-sm p-6">
       <div className="mb-4">
-        <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold">
+        <h2 className="mb-1 flex items-center gap-2 text-2xl font-bold">
           <MapPin className="h-8 w-8 text-primary" />
-          Interactive Map - {countryName}
+          Interactive Map — {countryName}
         </h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Click on markers to see hotel, restaurant, and attraction details.
-          Total locations: {markers.length}
+        <p className="text-sm text-muted-foreground">
+          {markers.length > 0 && `${markers.length} locations · `}
+          {(transitLines?.length ?? 0) > 0 && `${transitLines!.length} transit lines · `}
+          Click markers or lines for details
         </p>
       </div>
-      
-      <div 
-        id="map-container" 
+
+      <div
+        id="map-container"
         style={{ height: '500px', width: '100%', borderRadius: '8px' }}
         className="border-2 border-border overflow-hidden"
       />
-      
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
-        <div className="space-y-2">
-          <h3 className="font-semibold mb-2">Legend</h3>
-          <div className="space-y-2 text-sm">
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {/* Place legend */}
+        <div>
+          <h3 className="font-semibold mb-2 text-sm">Places</h3>
+          <div className="space-y-1.5 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
-                🏨
-              </div>
+              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs shrink-0">🏨</div>
               <span>Hotels</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
-                🍽
-              </div>
+              <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs shrink-0">🍽</div>
               <span>Restaurants</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs">
-                📸
-              </div>
+              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs shrink-0">📸</div>
               <span>Attractions</span>
             </div>
           </div>
         </div>
-        
-        <div className="space-y-2">
-          <h3 className="font-semibold mb-2">Location Summary</h3>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <p>• Interactive map with real location data</p>
-            <p>• Click markers for detailed information</p>
-            <p>• Color-coded by place type</p>
-            <p>• Zoom and pan controls available</p>
+
+        {/* Transit lines legend — only shown when lines exist */}
+        {(transitLines?.length ?? 0) > 0 && (
+          <div>
+            <h3 className="font-semibold mb-2 text-sm">Transit Lines</h3>
+            <div className="space-y-1.5 text-sm">
+              {[
+                { mode: "metro",  label: "Metro / Subway" },
+                { mode: "bus",    label: "Bus" },
+                { mode: "rail",   label: "Rail / Train" },
+                { mode: "tram",   label: "Tram" },
+                { mode: "ferry",  label: "Ferry" },
+              ].filter(({ mode }) =>
+                transitLines!.some(l => l.mode === mode)
+              ).map(({ mode, label }) => (
+                <div key={mode} className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-1 rounded-full shrink-0"
+                    style={{ backgroundColor: LINE_COLORS[mode] }}
+                  />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Card>
   )

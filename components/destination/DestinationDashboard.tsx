@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import { useState } from "react"
+import type { TransportationInfo } from "@/lib/transport-client"
 import { motion, AnimatePresence } from "framer-motion"
 import { DestinationSidebar, MobileBottomNav } from "./DestinationSidebar"
 import { DestinationHero } from "./DestinationHero"
@@ -69,6 +70,7 @@ interface DestinationData {
     location: { lat: number; lng: number }
     info: { rating?: number; price?: string; cuisine?: string }
   }>
+  transportation?: TransportationInfo
 }
 
 interface SquadEvent {
@@ -170,6 +172,7 @@ export function DestinationDashboard({
           </motion.div>
         )
       case "activities":
+        console.log("[RUNTIME:dashboard] Rendering ActivitiesGrid — activeTab:", activeTab, "destination.activities.length:", destination.activities.length)
         return (
           <motion.div key="activities" {...SECTION_VARIANTS}>
             <ActivitiesGrid activities={destination.activities} />
@@ -193,6 +196,7 @@ export function DestinationDashboard({
             <TransportSection
               transfers={destination.transfers ?? []}
               cityName={resolvedCity}
+              transportation={destination.transportation}
             />
           </motion.div>
         )

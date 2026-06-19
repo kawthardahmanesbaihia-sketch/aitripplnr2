@@ -117,9 +117,10 @@ const DEST_CODES: Record<string, string> = {
   // Thailand
   "bangkok": "BKK",    "phuket": "HKT",   "chiang mai": "CNX","koh samui": "USM",
   "krabi": "KBV",      "pai": "CNX",      "pattaya": "BKK",   "hua hin": "HHQ",
+  "patong": "HKT",     // beach sub-region of Phuket island
   // Indonesia
   "bali": "DPS",       "jakarta": "CGK",  "lombok": "LOP",    "ubud": "DPS",
-  "seminyak": "DPS",   "yogyakarta": "JOG","surabaya": "SUB",
+  "seminyak": "DPS",   "kuta": "DPS",     "yogyakarta": "JOG","surabaya": "SUB",
   // Malaysia
   "kuala lumpur": "KUL","penang": "PEN",  "langkawi": "LGK",  "kota kinabalu": "BKI",
   // Philippines
@@ -171,8 +172,8 @@ const DEST_CODES: Record<string, string> = {
   "addis ababa": "ADD","dar es salaam": "DAR",
   // West Africa
   "accra": "ACC",      "lagos": "LOS",    "dakar": "DSS",
-  // Singapore
-  "singapore": "SIN",
+  // Singapore & sub-regions
+  "singapore": "SIN",  "marina bay": "SIN",  "sentosa": "SIN",
   // Switzerland
   "zurich": "ZRH",     "geneva": "GVA",   "interlaken": "BRN","zermatt": "ZRH",
   "lausanne": "GVA",   "bern": "BRN",     "lucerne": "ZRH",   "basel": "BSL",

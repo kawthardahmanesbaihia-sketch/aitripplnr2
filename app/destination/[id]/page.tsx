@@ -18,6 +18,7 @@ import { ItineraryGenerator } from "@/components/ItineraryGenerator"
 import { DestinationDashboard } from "@/components/destination/DestinationDashboard"
 import { useTrackHistory } from "@/hooks/useTrackHistory"
 import { useAuth } from "@/contexts/auth-context"
+import type { TransportationInfo } from "@/lib/transport-client"
 
 interface DestinationData {
   name: string
@@ -71,6 +72,7 @@ interface DestinationData {
     location: { lat: number; lng: number }
     info:     { rating?: number; price?: string; cuisine?: string }
   }>
+  transportation?: TransportationInfo
 }
 
 const SQUAD_CONFIG: Record<SquadType, { label: string; emoji: string; tagline: string }> = {
@@ -401,6 +403,7 @@ function DestinationPageInner() {
           const detailsText = await detailsResponse.text()
           try { details = JSON.parse(detailsText) } catch {}
         }
+        console.log("[RUNTIME:page] After API parse — details.activities?.length:", details.activities?.length, "| dataSources.activities:", details.dataSources?.activities)
 
         const [countryImg, hotelImg, restaurantImg, activityImg] = await Promise.all([
           cityResolved
@@ -438,6 +441,17 @@ function DestinationPageInner() {
               rawNegatives,
             )
 
+        const _runtimeMappedActs = (details.activities || []).slice(0, 6).map((a: any, idx: number) => ({
+          name:        a.title       || a.name,
+          duration:    a.duration    || "Half day",
+          description: a.description || "Exciting activity",
+          rating:      a.rating,
+          image:       idx === 0 ? activityImg : undefined,
+          price:       a.price       || undefined,
+          category:    a.category    || undefined,
+        }))
+        console.log("[RUNTIME:page] Before setDestination — mapped activities.length:", _runtimeMappedActs.length)
+
         setDestination({
           name: country.name,
           matchPercentage: Math.round(country.matchPercentage || 0),
@@ -467,15 +481,7 @@ function DestinationPageInner() {
             openNow:         r.openNow,
             mapsUrl:         r.mapsUrl,
           })),
-          activities: (details.activities || []).slice(0, 6).map((a: any, idx: number) => ({
-            name:        a.title       || a.name,
-            duration:    a.duration    || "Half day",
-            description: a.description || "Exciting activity",
-            rating:      a.rating,
-            image:       idx === 0 ? activityImg : undefined,
-            price:       a.price       || undefined,
-            category:    a.category    || undefined,
-          })),
+          activities: _runtimeMappedActs,
           transfers: (details.transfers || []).map((t: any) => ({
             name:     t.name     || "Transfer",
             vehicle:  t.vehicle  || "",
@@ -489,7 +495,9 @@ function DestinationPageInner() {
             details.activities  || [],
             country.name,
           ),
+          transportation: details.transportation ?? undefined,
         })
+        console.log("[RUNTIME:page] After setDestination — destination.activities.length (value passed):", _runtimeMappedActs.length)
 
       } catch {
         const rawPositives: string[] = country.positives || []
@@ -602,7 +610,11 @@ function DestinationPageInner() {
       }
       mapContent={
         destination.mapMarkers ? (
-          <DestinationMap markers={destination.mapMarkers} countryName={destination.name} />
+          <DestinationMap
+            markers={destination.mapMarkers}
+            countryName={destination.name}
+            transitLines={destination.transportation?.lines}
+          />
         ) : undefined
       }
       itineraryContent={

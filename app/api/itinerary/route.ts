@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchEnhancedHotels, fetchEnhancedRestaurants } from '@/lib/enhanced-places-api'
 import { fetchGoogleHotels, fetchGoogleRestaurants } from '@/lib/google-places'
+import { fetchGeoapifyRestaurants } from '@/lib/geoapify-client'
 import { generateCountrySpecificActivities } from '@/lib/country-activities-generator'
 import { getBestCity } from '@/lib/destination-enhancer'
 import { getCountryCode } from '@/lib/destination-image-generator'
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Resolve best city for the budget + profile
     const city = cityOverride || getBestCity(countryCode, {}, budget).cityName
 
-    // Normalize budget to Foursquare-compatible levels
+    // Normalize budget to provider-compatible levels
     const budgetLevel =
       budget === 'low' || budget === 'budget'   ? 'budget'    :
       budget === 'luxury' || budget === 'high'  ? 'luxury'    :
@@ -74,14 +74,13 @@ export async function POST(request: NextRequest) {
       .map((i: string) => INTEREST_TO_CATEGORY[i] ?? 'cultural')
       .filter(Boolean)
 
-    // Places: Google → Foursquare → country-specific generated data (cascading fallbacks)
+    // Hotels:      Google Places
+    // Restaurants: Geoapify → Google Places
     const [hotels, restaurants, rawActivities] = await Promise.all([
-      fetchGoogleHotels(city, budgetLevel)
-        .then(r => r.length > 0 ? r : fetchEnhancedHotels())
-        .catch(() => fetchEnhancedHotels().catch(() => [])),
-      fetchGoogleRestaurants(city, budgetLevel)
-        .then(r => r.length > 0 ? r : fetchEnhancedRestaurants())
-        .catch(() => fetchEnhancedRestaurants().catch(() => [])),
+      fetchGoogleHotels(city, budgetLevel, countryName).catch(() => []),
+      fetchGeoapifyRestaurants(city, budgetLevel, countryName)
+        .then(r => r.length > 0 ? r : fetchGoogleRestaurants(city, budgetLevel, undefined, countryName))
+        .catch(() => fetchGoogleRestaurants(city, budgetLevel, undefined, countryName).catch(() => [])),
       Promise.resolve(
         generateCountrySpecificActivities(countryName, preferenceCategories.length > 0 ? preferenceCategories : ['cultural', 'nature'])
       ),

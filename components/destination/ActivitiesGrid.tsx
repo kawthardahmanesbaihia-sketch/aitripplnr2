@@ -55,6 +55,7 @@ interface Activity {
 }
 
 export function ActivitiesGrid({ activities }: { activities: Activity[] }) {
+  console.log("[RUNTIME:ActivitiesGrid] render — activities.length:", activities.length)
   return (
     <div className="p-6">
       <div className="mb-5">

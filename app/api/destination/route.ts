@@ -5,16 +5,19 @@
  * Every data source is a live API call.  If a call fails or returns nothing
  * the corresponding field is an empty array / null — never fake data.
  *
- * Data sources
- *   hotels      → HotelBeds Hotel Content API  (HOTELBEDS_HOTELS_API_KEY + SECRET)
- *   restaurants → Google Places Text Search    (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
- *   activities  → HotelBeds Activities API     (HOTELBEDS_ACTIVITIES_API_KEY + SECRET)
+ * Provider priority (resolved after all parallel fetches settle):
+ *   hotels      → HotelBeds                              → static fallback
+ *   restaurants → Geoapify → Google Places               → static fallback
+ *   activities  → HotelBeds → OpenTripMap → Google Places
+ *   transit     → Google Places
+ *
+ * Other data sources
  *   transfers   → HotelBeds Transfers API      (HOTELBEDS_TRANSFERS_API_KEY + SECRET)
  *   weather     → OpenWeatherMap               (OPENWEATHER_API_KEY)     [if travelDates]
  *   events      → Eventbrite                   (EVENTBRITE_API_KEY)      [if travelDates]
  *   summary     → Google Gemini                (GEMINI_API_KEY)
  *   image       → Unsplash                     (UNSPLASH_ACCESS_KEY)
- *   mapMarkers  → derived from real coordinates returned by hotels/restaurants
+ *   mapMarkers  → derived from real coordinates returned by hotels/restaurants/activities
  */
 
 import { type NextRequest, NextResponse } from "next/server"
@@ -31,15 +34,17 @@ import {
 } from "@/lib/hotelbeds-client"
 
 import {
-  fetchGoogleRestaurants,
-  fetchGoogleHotels,
-  fetchGoogleActivities,
   fetchGoogleTransitHubs,
-  type GooglePlaceRestaurant,
+  fetchGoogleRestaurants,
+  fetchGoogleActivities,
   type GooglePlaceHotel,
+  type GooglePlaceRestaurant,
   type GooglePlaceActivity,
   type GoogleTransitHub,
 } from "@/lib/google-places"
+
+import { fetchGeoapifyHotels, fetchGeoapifyRestaurants } from "@/lib/geoapify-client"
+import { fetchOpenTripMapActivities }  from "@/lib/opentripmap-client"
 
 import {
   generateDestinationSummary,
@@ -49,6 +54,15 @@ import { getDestinationImage, getCountryFlagUrl } from "@/lib/destination-image-
 import { generateSeed } from "@/lib/seed-randomizer"
 import { getWeatherForTravel }  from "@/lib/weather-service"
 import { sanitizeCityForSearch } from "@/lib/destination-city-guard"
+import {
+  NEARBY_CITY,
+  COUNTRY_MAIN_CITY,
+  getCountryFestivalsForMonth,
+  getGlobalHotelFallback,
+  getGlobalRestaurantFallback,
+  getGlobalActivityFallback,
+} from "@/lib/smart-fallback"
+import { fetchTransportData, buildStaticTransportSummary, type TransportationInfo } from "@/lib/transport-client"
 
 export const dynamic    = "force-dynamic"
 export const revalidate = 0
@@ -77,14 +91,14 @@ interface MapMarker {
 
 // Map-marker builder (only from real coordinate data)
 function buildMapMarkers(
-  hotels:      HotelbedsHotel[],
-  googleHotels: GooglePlaceHotel[],
-  restaurants: GooglePlaceRestaurant[],
-  activities:  GooglePlaceActivity[],
+  hotels:       HotelbedsHotel[],
+  staticHotels: GooglePlaceHotel[],
+  restaurants:  GooglePlaceRestaurant[],
+  activities:   GooglePlaceActivity[],
 ): MapMarker[] {
   const markers: MapMarker[] = []
 
-  const hotelSource = hotels.length > 0 ? hotels : googleHotels
+  const hotelSource = hotels.length > 0 ? hotels : staticHotels
 
   hotelSource.slice(0, 5).forEach((h, i) => {
     const loc = (h as HotelbedsHotel).location ?? (h as GooglePlaceHotel).location
@@ -217,7 +231,7 @@ function adaptTransfer(t: HotelbedsTransfer) {
   }
 }
 
-// Cuisine hint from user preferences
+// Cuisine hint for Google Places restaurant queries
 function cuisineHintFromPreferences(_prefs: string[], countryName: string): string | undefined {
   const CUISINE_MAP: Record<string, string> = {
     italy: "italian", france: "french", japan: "japanese", spain: "spanish tapas",
@@ -257,62 +271,80 @@ export async function POST(request: NextRequest) {
       `budget="${budget}" squad="${squad}" seed=${requestSeed}`
     )
 
-    // Fire all real-data fetches in parallel
-    const squadContext         = squad !== "solo" ? `${squad} travel` : "solo travel"
-    const enhancedPreferences  = [squadContext, ...userPreferences]
+    const squadContext        = squad !== "solo" ? `${squad} travel` : "solo travel"
+    const enhancedPreferences = [squadContext, ...userPreferences]
+    const cuisineHint         = cuisineHintFromPreferences(userPreferences, countryName)
 
+    // Fire all real-data fetches in parallel.
+    // Provider priority is resolved after all settle:
+    //   Hotels:      HotelBeds → static fallback
+    //   Restaurants: Geoapify → Google Places → static fallback
+    //   Activities:  HotelBeds → OpenTripMap → Google Places
+    //   Transit:     Google Places
     const [
-      googleHotelsResult,
-      googleRestaurants,
-      hotelbedsActivities,
+      hotelbedsHotelsResult,
+      geoapifyRestaurantsResult,
+      openTripMapResult,
+      hotelbedsActivitiesResult,
+      googleRestaurantsResult,
+      googleActivitiesResult,
       geminiSummary,
       destinationImg,
       transitHubsResult,
-      googleActivitiesResult,
+      geoapifyHotelsResult,
     ] = await Promise.allSettled([
 
-      // 1 — Google Hotels (New Places API) — primary source
-      fetchGoogleHotels(targetCity, budget, countryName).catch((e) => {
-        console.error("[destination] Google Hotels error:", e); return []
+      // 1 — HotelBeds Hotels (primary hotels provider)
+      fetchHotelbedsHotels(targetCity, budget).catch((e) => {
+        console.error("[destination] HotelBeds Hotels error:", e); return []
       }),
 
-      // 2 — Google Places Restaurants (Places API New)
-      fetchGoogleRestaurants(
-        targetCity,
-        budget,
-        cuisineHintFromPreferences(userPreferences, countryName),
-        countryName,
-      ).catch((e) => {
-        console.error("[destination] Google Places Restaurants error:", e); return []
+      // 2 — Geoapify Restaurants (primary restaurants provider)
+      fetchGeoapifyRestaurants(targetCity, budget, countryName).catch((e) => {
+        console.error("[destination] Geoapify Restaurants error:", e); return []
       }),
 
-      // 3 — HotelBeds Activities
+      // 3 — OpenTripMap Activities (primary activities provider)
+      fetchOpenTripMapActivities(targetCity, countryName).catch((e) => {
+        console.error("[destination] OpenTripMap Activities error:", e); return []
+      }),
+
+      // 4 — HotelBeds Activities (last-resort activities provider)
       fetchHotelbedsActivities(
         targetCity,
         travelDates?.start,
-        travelDates?.end
+        travelDates?.end,
       ).catch((e) => {
         console.error("[destination] HotelBeds Activities error:", e); return []
       }),
 
-      // 4 — Gemini destination summary (pros/cons/why)
+      // 5 — Google Places Restaurants (fallback when Geoapify returns nothing)
+      fetchGoogleRestaurants(targetCity, budget, cuisineHint, countryName).catch((e) => {
+        console.error("[destination] Google Restaurants error:", e); return []
+      }),
+
+      // 6 — Google Places Activities (fallback when OpenTripMap returns nothing;
+      //      also the coordinate source for attraction map markers)
+      fetchGoogleActivities(targetCity, countryName).catch((e) => {
+        console.error("[destination] Google Activities error:", e); return []
+      }),
+
+      // 7 — Gemini destination summary (pros/cons/why)
       generateDestinationSummary(countryName, enhancedPreferences, climate, preferredActivities)
         .catch((e) => { console.error("[destination] Gemini summary error:", e); return null }),
 
-      // 5 — Destination cover image
+      // 8 — Destination cover image
       getDestinationImage(countryName)
         .catch(() => null),
 
-      // 6 — Google Transit Hubs (for Transport section)
+      // 9 — Google Transit Hubs (Transport section only)
       fetchGoogleTransitHubs(targetCity, countryName).catch((e) => {
         console.error("[destination] Google Transit Hubs error:", e); return []
       }),
 
-      // 7 — Google Activities — always fetched in parallel for map-marker coordinates.
-      //     HotelbedsActivity has no lat/lng, so Google is the only coordinate source
-      //     for attraction markers regardless of which source wins the display list.
-      fetchGoogleActivities(targetCity, countryName).catch((e) => {
-        console.error("[destination] Google Activities (markers) error:", e); return []
+      // 10 — Geoapify Hotels (hotel fallback when HotelBeds returns nothing)
+      fetchGeoapifyHotels(targetCity, budget, countryName).catch((e) => {
+        console.error("[destination] Geoapify Hotels error:", e); return []
       }),
     ])
 
@@ -340,8 +372,8 @@ export async function POST(request: NextRequest) {
 
     // Events (only when travelDates are provided)
     let eventsData: object[] = []
+    let eventsFromEventbrite = false
     if (travelDates?.start && travelDates?.end) {
-      // Call the events route handler logic inline to avoid HTTP round-trip
       const evApiKey = process.env.EVENTBRITE_API_KEY
       if (evApiKey) {
         try {
@@ -376,6 +408,7 @@ export async function POST(request: NextRequest) {
               image:       e.logo?.url ?? undefined,
             }))
             console.log(`[destination] Eventbrite returned ${eventsData.length} events`)
+            eventsFromEventbrite = eventsData.length > 0
           }
         } catch (evErr) {
           console.error("[destination] Eventbrite inline error:", evErr)
@@ -384,37 +417,224 @@ export async function POST(request: NextRequest) {
     }
 
     // Unwrap settled results
-    const googleHotelsList     = (googleHotelsResult.status     === "fulfilled" ? googleHotelsResult.value     : []) as GooglePlaceHotel[]
-    const restaurants          = (googleRestaurants.status      === "fulfilled" ? googleRestaurants.value      : []) as GooglePlaceRestaurant[]
-    const rawActivities        = (hotelbedsActivities.status    === "fulfilled" ? hotelbedsActivities.value    : []) as HotelbedsActivity[]
-    const summaryData          = (geminiSummary.status          === "fulfilled" ? geminiSummary.value          : null)
-    const destImgUrl           = (destinationImg.status         === "fulfilled" ? destinationImg.value         : null) ?? ""
-    const transitHubs          = (transitHubsResult.status      === "fulfilled" ? transitHubsResult.value      : []) as GoogleTransitHub[]
-    const googleActivitiesList = (googleActivitiesResult.status === "fulfilled" ? googleActivitiesResult.value : []) as GooglePlaceActivity[]
+    const hotels              = (hotelbedsHotelsResult.status       === "fulfilled" ? hotelbedsHotelsResult.value       : []) as HotelbedsHotel[]
+    const geoapifyRestList    = (geoapifyRestaurantsResult.status    === "fulfilled" ? geoapifyRestaurantsResult.value    : []) as GooglePlaceRestaurant[]
+    const openTripMapList     = (openTripMapResult.status            === "fulfilled" ? openTripMapResult.value            : []) as GooglePlaceActivity[]
+    const rawActivities       = (hotelbedsActivitiesResult.status    === "fulfilled" ? hotelbedsActivitiesResult.value    : []) as HotelbedsActivity[]
+    const googleRestList      = (googleRestaurantsResult.status      === "fulfilled" ? googleRestaurantsResult.value      : []) as GooglePlaceRestaurant[]
+    const googleActList       = (googleActivitiesResult.status       === "fulfilled" ? googleActivitiesResult.value       : []) as GooglePlaceActivity[]
+    const summaryData         = (geminiSummary.status                === "fulfilled" ? geminiSummary.value                : null)
+    const destImgUrl          = (destinationImg.status               === "fulfilled" ? destinationImg.value               : null) ?? ""
+    const transitHubs         = (transitHubsResult.status            === "fulfilled" ? transitHubsResult.value            : []) as GoogleTransitHub[]
+    const geoapifyHotelsList  = (geoapifyHotelsResult.status         === "fulfilled" ? geoapifyHotelsResult.value         : []) as GooglePlaceHotel[]
 
-    console.log(`[destination] Google Hotels: ${googleHotelsList.length} hotels`)
-    console.log(`[destination] Google Activities (map markers): ${googleActivitiesList.length} activities`)
+    console.log(
+      `[destination] Parallel fetch complete — ` +
+      `hb_hotels=${hotels.length} geo_hotels=${geoapifyHotelsList.length} ` +
+      `geoapify_restaurants=${geoapifyRestList.length} g_restaurants=${googleRestList.length} ` +
+      `otm_activities=${openTripMapList.length} g_activities=${googleActList.length} hb_activities=${rawActivities.length}`
+    )
 
-    // HotelBeds Hotels fallback — only fetched when Google returned nothing
-    let hotels: HotelbedsHotel[] = []
-    if (googleHotelsList.length === 0) {
-      hotels = await fetchHotelbedsHotels(targetCity, budget).catch((e) => {
-        console.error("[destination] HotelBeds Hotels fallback error:", e); return []
-      })
-      console.log(`[destination] HotelBeds Hotels fallback: ${hotels.length} hotels`)
+    // ── [DEBUG] Activity provider samples ──────────────────────────────────
+    console.log("[DEBUG:activities] Provider counts:", {
+      hotelbeds:   rawActivities.length,
+      opentripmap: openTripMapList.length,
+      google:      googleActList.length,
+    })
+    if (rawActivities.length > 0) {
+      const s = rawActivities[0]
+      console.log("[DEBUG:activities] HotelBeds sample:", JSON.stringify({
+        name: s.name, description: s.description?.slice(0, 60),
+        duration: s.duration, price: s.price, category: s.category,
+        hasLocation: false,
+      }))
+    } else {
+      console.log("[DEBUG:activities] HotelBeds → 0 results (key missing, API error, or 0 inventory)")
+    }
+    if (openTripMapList.length > 0) {
+      const s = openTripMapList[0]
+      console.log("[DEBUG:activities] OpenTripMap sample:", JSON.stringify({
+        name: s.name, description: s.description?.slice(0, 60),
+        location: s.location, hasLat: !!s.location?.lat, hasLng: !!s.location?.lng,
+      }))
+    } else {
+      console.log("[DEBUG:activities] OpenTripMap → 0 results (likely 401 invalid key)")
+    }
+    if (googleActList.length > 0) {
+      const s = googleActList[0]
+      console.log("[DEBUG:activities] Google sample:", JSON.stringify({
+        name: s.name, description: s.description?.slice(0, 60),
+        location: s.location, hasLat: !!s.location?.lat, hasLng: !!s.location?.lng,
+      }))
+    } else {
+      console.log("[DEBUG:activities] Google → 0 results (likely 429 quota exhausted)")
+    }
+    // ── end DEBUG ───────────────────────────────────────────────────────────
+
+    // ── Provider priority resolution ────────────────────────────────────────
+    //   Hotels:      HotelBeds → Geoapify Hotels           (→ static fallback below)
+    //   Restaurants: Geoapify → Google Places               (→ static fallback below)
+    //   Activities:  HotelBeds → OpenTripMap → Google Places
+    const restaurants: GooglePlaceRestaurant[] =
+      geoapifyRestList.length  > 0 ? geoapifyRestList :
+      googleRestList.length    > 0 ? googleRestList   :
+      []
+
+    let activitiesList =
+      rawActivities.length    > 0 ? rawActivities.map(adaptActivity)         :
+      openTripMapList.length  > 0 ? openTripMapList.map(adaptGoogleActivity) :
+      googleActList.length    > 0 ? googleActList.map(adaptGoogleActivity)   :
+      []
+
+    const _actWinner =
+      rawActivities.length   > 0 ? "hotelbeds" :
+      openTripMapList.length > 0 ? "opentripmap" :
+      googleActList.length   > 0 ? "google" :
+      "none"
+    console.log(`[DEBUG:activities] Priority winner="${_actWinner}" activitiesList.length=${activitiesList.length}`)
+    if (activitiesList.length > 0) {
+      const s = activitiesList[0] as any
+      console.log("[DEBUG:activities] First adapted activity:", JSON.stringify({
+        name: s.name, title: s.title,
+        hasLocation: !!s.location, lat: s.location?.lat, lng: s.location?.lng,
+      }))
+    } else {
+      console.log("[DEBUG:activities] activitiesList=[] — all three providers returned 0. Smart fallback will run if fallbackCity is available.")
     }
 
-    // Resolve final data sets — HotelBeds first, Google fallback second
-    const activitiesList = rawActivities.length > 0
-      ? rawActivities.map(adaptActivity)
-      : googleActivitiesList.map(adaptGoogleActivity)
+    // ── Smart Fallback Layer ────────────────────────────────────────────────
+    // Only fires when ALL primary+secondary providers for a section returned empty.
+    // Hotels:      no API retry  → straight to static curated data
+    // Restaurants: Geoapify(fallback city) → Google(fallback city) → static
+    // Activities:  OTM(fallback city) → Google(fallback city)
+    let effectiveStaticHotels: GooglePlaceHotel[]     = []
+    let effectiveRestaurants:  GooglePlaceRestaurant[] = restaurants
+
+    const needHotels      = hotels.length === 0
+    const needRestaurants = restaurants.length === 0           // geoapify + google both empty
+    const needActivities  = activitiesList.length === 0        // otm + google + hb all empty
+    const fallbackCity    = NEARBY_CITY[targetCity] ?? COUNTRY_MAIN_CITY[countryName]
+
+    if (needHotels) {
+      if (geoapifyHotelsList.length > 0) {
+        effectiveStaticHotels = geoapifyHotelsList
+        console.log(`[destination] Geoapify Hotels fallback: ${geoapifyHotelsList.length} hotels`)
+      } else {
+        effectiveStaticHotels = getGlobalHotelFallback(climate, targetCity) as unknown as GooglePlaceHotel[]
+        console.log(`[destination] Hotel static fallback: ${effectiveStaticHotels.length} entries`)
+      }
+    }
+
+    if (needRestaurants || needActivities) {
+      let fbRestaurants: GooglePlaceRestaurant[] = []
+      let fbActivities:  GooglePlaceActivity[]   = []
+
+      if (fallbackCity && fallbackCity !== targetCity) {
+        console.log(`[destination] Smart fallback: querying "${fallbackCity}" for empty sections`)
+
+        // Try Geoapify then Google for restaurants; OTM then Google for activities
+        const [fbGeoRest, fbOtmAct] = await Promise.all([
+          needRestaurants
+            ? fetchGeoapifyRestaurants(fallbackCity, budget, countryName).catch(() => [] as GooglePlaceRestaurant[])
+            : Promise.resolve([] as GooglePlaceRestaurant[]),
+          needActivities
+            ? fetchOpenTripMapActivities(fallbackCity, countryName).catch(() => [] as GooglePlaceActivity[])
+            : Promise.resolve([] as GooglePlaceActivity[]),
+        ])
+
+        // If Geoapify fallback-city also returned nothing, try Google for that city
+        if (needRestaurants && fbGeoRest.length === 0) {
+          fbRestaurants = await fetchGoogleRestaurants(fallbackCity, budget, cuisineHint, countryName)
+            .catch(() => [] as GooglePlaceRestaurant[])
+        } else {
+          fbRestaurants = fbGeoRest
+        }
+
+        // If OTM fallback-city also returned nothing, try Google for that city
+        if (needActivities && fbOtmAct.length === 0) {
+          fbActivities = await fetchGoogleActivities(fallbackCity, countryName)
+            .catch(() => [] as GooglePlaceActivity[])
+        } else {
+          fbActivities = fbOtmAct
+        }
+
+        console.log(
+          `[destination] Smart fallback result — ` +
+          `restaurants=${fbRestaurants.length} activities=${fbActivities.length}`
+        )
+      }
+
+      // Level 3: static curated data when every API attempt returned nothing
+      if (needRestaurants && fbRestaurants.length === 0) {
+        fbRestaurants = getGlobalRestaurantFallback(countryName) as unknown as GooglePlaceRestaurant[]
+        console.log(`[destination] Restaurant static fallback: ${fbRestaurants.length} entries`)
+      }
+
+      if (needActivities && fbActivities.length > 0) {
+        activitiesList = fbActivities.map(adaptGoogleActivity)
+      }
+
+      if (needRestaurants) {
+        effectiveRestaurants = fbRestaurants.length > 0 ? fbRestaurants : restaurants
+      }
+    }
+
+    // Level 4: static curated activity fallback — fires when all live providers
+    // (HotelBeds, OpenTripMap, Google, smart fallback city) returned 0 activities.
+    // Guarantees activities is never empty for any destination.
+    let activitiesStaticFallback = false
+    console.log("[RUNTIME:route] Before static fallback — activitiesList.length:", activitiesList.length)
+    if (activitiesList.length === 0) {
+      const staticActs = getGlobalActivityFallback(countryName)
+      if (staticActs.length > 0) {
+        activitiesList = staticActs as unknown as typeof activitiesList
+        activitiesStaticFallback = true
+        console.log(`[destination] Activity static fallback: ${staticActs.length} activities for "${countryName}"`)
+      }
+    }
+
+    console.log("[RUNTIME:route] After static fallback — activitiesList.length:", activitiesList.length, "activitiesStaticFallback:", activitiesStaticFallback)
+
+    // Events: use country festivals when Eventbrite returned nothing for the dates
+    if (travelDates?.start && eventsData.length === 0) {
+      const festivals = getCountryFestivalsForMonth(countryName, travelDates.start)
+      if (festivals.length > 0) {
+        eventsData = festivals
+        console.log(`[destination] Festival fallback: ${festivals.length} events for ${countryName}`)
+      }
+    }
 
     const adaptedHotels      = hotels.length > 0
       ? hotels.map((h) => adaptHotel(h, budget))
-      : googleHotelsList.map(adaptGoogleHotel)
-    const adaptedRestaurants = restaurants.map(adaptRestaurant)
+      : effectiveStaticHotels.map(adaptGoogleHotel)
+    const adaptedRestaurants = effectiveRestaurants.map(adaptRestaurant)
     const adaptedTransfers   = transfersList.map(adaptTransfer)
-    const mapMarkers         = buildMapMarkers(hotels, googleHotelsList, restaurants, googleActivitiesList)
+
+    // Activity coord source for map markers:
+    // HotelBeds activities have no lat/lng, so prefer OTM → Google for the marker layer
+    // regardless of which provider won the display list.
+    const activityCoordSource: GooglePlaceActivity[] =
+      openTripMapList.length > 0 ? openTripMapList : googleActList
+    console.log(
+      `[DEBUG:markers] activityCoordSource.length=${activityCoordSource.length}` +
+      ` (otm=${openTripMapList.length} google=${googleActList.length})` +
+      (activityCoordSource.length === 0 ? " ← NO activity markers will be generated" : "")
+    )
+    if (activityCoordSource.length > 0) {
+      const coordCheck = activityCoordSource.slice(0, 4).map(a => ({
+        name: a.name, lat: a.location?.lat, lng: a.location?.lng,
+        validCoords: !!(a.location?.lat && a.location?.lng),
+      }))
+      console.log("[DEBUG:markers] activityCoordSource sample:", JSON.stringify(coordCheck))
+    }
+    const mapMarkers = buildMapMarkers(hotels, effectiveStaticHotels, effectiveRestaurants, activityCoordSource)
+    const _hotelMarkers      = mapMarkers.filter(m => m.type === "hotel").length
+    const _restaurantMarkers = mapMarkers.filter(m => m.type === "restaurant").length
+    const _attractionMarkers = mapMarkers.filter(m => m.type === "attraction").length
+    console.log(
+      `[DEBUG:markers] Total markers=${mapMarkers.length}` +
+      ` hotels=${_hotelMarkers} restaurants=${_restaurantMarkers} attractions=${_attractionMarkers}`
+    )
 
     // Positives / Negatives from Gemini (not hardcoded)
     const positives: string[] = summaryData?.pros ?? []
@@ -422,18 +642,27 @@ export async function POST(request: NextRequest) {
 
     // Determine actual data sources for transparency
     const dataSources = {
-      hotels:      googleHotelsList.length > 0 ? "google_places"
-                   : hotels.length          > 0 ? "hotelbeds"
+      hotels:      hotels.length                    > 0 ? "hotelbeds"
+                   : geoapifyHotelsList.length      > 0 ? "geoapify"
+                   : effectiveStaticHotels.length   > 0 ? "static"
                    : "empty",
-      restaurants: restaurants.length      > 0 ? "google_places"  : "empty",
-      activities:  rawActivities.length    > 0 ? "hotelbeds"
-                   : googleActivitiesList.length > 0 ? "google_places"
+      restaurants: geoapifyRestList.length          > 0 ? "geoapify"
+                   : googleRestList.length          > 0 ? "google_places"
+                   : effectiveRestaurants.length    > 0 ? "static"
                    : "empty",
-      transfers: transfersList.length      > 0 ? "hotelbeds"      : "empty",
-      weather:   weatherData
+      activities:  rawActivities.length             > 0 ? "hotelbeds"
+                   : openTripMapList.length         > 0 ? "opentripmap"
+                   : googleActList.length           > 0 ? "google_places"
+                   : activitiesStaticFallback        ? "static_fallback"
+                   : activitiesList.length          > 0 ? "static"
+                   : "empty",
+      transfers:   transfersList.length             > 0 ? "hotelbeds"      : "empty",
+      weather:     weatherData
         ? ((weatherData as any).type === "real" ? "openweather" : "climate_estimate")
         : "empty",
-      events:    eventsData.length         > 0 ? "eventbrite"     : "empty",
+      events:      eventsFromEventbrite             ? "eventbrite"
+                   : eventsData.length > 0          ? "curated"
+                   : "empty",
     }
 
     console.log(
@@ -448,23 +677,53 @@ export async function POST(request: NextRequest) {
       "[Destination Debug]\n" +
       JSON.stringify(
         {
-          destination:   `${targetCity}, ${countryName}`,
-          country:       countryName,
+          destination:       `${targetCity}, ${countryName}`,
+          country:           countryName,
           originalCity,
-          sanitizedCity: targetCity,
-          hotels:        adaptedHotels.length,
-          hotelSource:   dataSources.hotels,
-          restaurants:   adaptedRestaurants.length,
-          activities:    activitiesList.length,
-          activitySource: dataSources.activities,
-          transfers:     adaptedTransfers.length,
-          events:        eventsData.length,
+          sanitizedCity:     targetCity,
+          hotels:            adaptedHotels.length,
+          hotelSource:       dataSources.hotels,
+          restaurants:       adaptedRestaurants.length,
+          restaurantSource:  dataSources.restaurants,
+          activities:        activitiesList.length,
+          activitySource:    dataSources.activities,
+          transfers:         adaptedTransfers.length,
+          events:            eventsData.length,
           cityWasRedirected: originalCity !== targetCity && originalCity !== "(none)",
         },
         null,
         2
       )
     )
+
+    // Transportation & Mobility — independent fetch, never blocks existing pipeline
+    let transportationData: TransportationInfo
+    try {
+      transportationData = await fetchTransportData(targetCity, countryName)
+    } catch {
+      transportationData = buildStaticTransportSummary(targetCity, countryName)
+    }
+    // Merge Google transit hubs into transportation stations when Transitland/Overpass returned none
+    if (transitHubs.length > 0 && transportationData.stations.length === 0) {
+      transportationData = {
+        ...transportationData,
+        stations: transitHubs.map(h => ({
+          id:       h.name.toLowerCase().replace(/\W+/g, "-"),
+          name:     h.name,
+          type:     (
+            h.type === "airport"         ? "airport"       :
+            h.type === "train_station"   ? "train_station" :
+            h.type === "bus_station"     ? "bus_station"   :
+            h.type === "transit_station" ? "metro"         : "transit"
+          ) as "airport" | "train_station" | "bus_station" | "metro" | "tram" | "ferry" | "transit",
+          lat:      h.location.lat,
+          lon:      h.location.lng,
+          address:  h.address   || undefined,
+          openHours: h.openHours || undefined,
+          mapsUrl:  h.mapsUrl   || undefined,
+        })),
+      }
+    }
 
     const result = {
       seed:             requestSeed,
@@ -475,6 +734,7 @@ export async function POST(request: NextRequest) {
       activities:       activitiesList,
       transfers:        adaptedTransfers,
       transitHubs,
+      transportation:   transportationData,
       weather:          weatherData,
       events:           eventsData,
       mapMarkers,
@@ -486,6 +746,7 @@ export async function POST(request: NextRequest) {
       dataSources,
     }
 
+    console.log("[RUNTIME:route] Before NextResponse.json — activitiesList.length:", activitiesList.length, "| activitiesStaticFallback:", activitiesStaticFallback, "| dataSources.activities:", dataSources.activities)
     return NextResponse.json(result, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
