@@ -142,6 +142,7 @@ interface TlResult {
   routes:    TransitRoute[]
   stations:  TransitStation[]
   operators: TransitOperator[]
+  lines:     TransitLine[]
   hasData:   boolean
 }
 
@@ -156,26 +157,63 @@ async function fetchTransitland(lat: number, lon: number, apiKey: string): Promi
     return res.json()
   }
 
-  const [stopsRes, routesRes, opsRes] = await Promise.allSettled([
+  // GraphQL query requests the geometry field — returns actual GTFS shapes
+  // when the agency's feed includes shapes.txt (null otherwise)
+  const gqlQuery = `{
+    routes(where: {near: {lat: ${lat}, lon: ${lon}, radius: ${radius}}}, limit: 20) {
+      onestop_id
+      route_long_name
+      route_short_name
+      route_type
+      route_color
+      geometry
+      operator { onestop_id name website }
+    }
+  }`
+
+  const [stopsRes, routesGqlRes, opsRes] = await Promise.allSettled([
     get(`stops?lat=${lat}&lon=${lon}&radius=${radius}&limit=20&per_page=20`),
-    get(`routes?lat=${lat}&lon=${lon}&radius=${radius}&limit=20&per_page=20`),
+    fetch(`https://transit.land/api/v2/query?apikey=${encodeURIComponent(apiKey)}`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body:    JSON.stringify({ query: gqlQuery }),
+      cache:   "no-store",
+      signal:  AbortSignal.timeout(15_000),
+    }).then(r => { if (!r.ok) throw new Error(`Transitland GraphQL HTTP ${r.status}`); return r.json() }),
     get(`operators?lat=${lat}&lon=${lon}&radius=${radius}&limit=10&per_page=10`),
   ])
 
-  const rawStops  = stopsRes.status  === "fulfilled" ? (stopsRes.value?.stops     ?? [])     : []
-  const rawRoutes = routesRes.status === "fulfilled" ? (routesRes.value?.routes   ?? [])     : []
-  const rawOps    = opsRes.status    === "fulfilled" ? (opsRes.value?.operators   ?? [])     : []
+  const rawStops = stopsRes.status === "fulfilled" ? (stopsRes.value?.stops     ?? []) : []
+  const rawOps   = opsRes.status   === "fulfilled" ? (opsRes.value?.operators   ?? []) : []
 
-  console.log(`[TRANSPORT] Transitland routes: ${rawRoutes.length} | stops: ${rawStops.length} | operators: ${rawOps.length}`)
+  let rawRoutes: any[] = []
+  if (routesGqlRes.status === "fulfilled") {
+    const gqlData = routesGqlRes.value
+    if (gqlData?.errors?.length) {
+      console.warn("[TRANSPORT] Transitland GraphQL errors:", gqlData.errors.map((e: any) => e.message).join("; "))
+    }
+    rawRoutes = gqlData?.data?.routes ?? []
+  } else if (routesGqlRes.status === "rejected") {
+    console.warn("[TRANSPORT] Transitland GraphQL failed:", routesGqlRes.reason)
+  }
+
+  const withGeom = rawRoutes.filter((r: any) => r.geometry != null).length
+  console.log(`[TRANSPORT] Transitland GraphQL: ${rawRoutes.length} routes, ${withGeom} with geometry | stops: ${rawStops.length} | operators: ${rawOps.length}`)
+
+  // Geometry type sample for first 3 routes
+  for (const r of rawRoutes.slice(0, 3)) {
+    const g = r.geometry
+    console.log(`[TRANSPORT]   route ${r.onestop_id}: geom type=${g?.type ?? "null"} coord_len=${g?.coordinates?.length ?? 0}`)
+  }
 
   const routes: TransitRoute[] = rawRoutes.slice(0, 15).map((r: any) => ({
-    id:        r.onestop_id ?? String(r.id ?? ""),
-    name:      r.route_long_name || r.route_short_name || r.name || "Route",
+    id:        r.onestop_id ?? "",
+    name:      r.route_long_name || r.route_short_name || "Route",
     shortName: r.route_short_name || undefined,
     mode:      GTFS_MODE[r.route_type as number] ?? "bus",
-    operator:  r.operator?.name ?? r.agency?.agency_name ?? undefined,
+    operator:  r.operator?.name ?? undefined,
     color:     r.route_color ? `#${r.route_color.replace(/^#/, "")}` : undefined,
-    headsign:  r.route_desc || undefined,
+    headsign:  undefined,
   }))
 
   const stations: TransitStation[] = rawStops.slice(0, 20).map((s: any) => ({
@@ -193,75 +231,83 @@ async function fetchTransitland(lat: number, lon: number, apiKey: string): Promi
     modes:   [],
   }))
 
-  return { routes, stations, operators, hasData: routes.length > 0 || stations.length > 0 }
+  // Build TransitLine objects from real GTFS shapes returned by the GraphQL geometry field
+  const lines: TransitLine[] = []
+  for (const r of rawRoutes.slice(0, 20)) {
+    const coords = extractGeoJSONCoords(r.geometry)
+    if (coords.length < 2) continue
+    lines.push({
+      id:          r.onestop_id ?? String(lines.length),
+      name:        r.route_long_name || r.route_short_name || "Route",
+      mode:        GTFS_MODE[r.route_type as number] ?? "bus",
+      color:       r.route_color ? `#${r.route_color.replace(/^#/, "")}` : undefined,
+      coordinates: sampleCoords(coords, 300),
+    })
+  }
+  console.log(`[TRANSPORT] Transitland GraphQL lines: ${lines.length}/${rawRoutes.length} routes had valid GTFS shapes`)
+
+  return { routes, stations, operators, lines, hasData: routes.length > 0 || stations.length > 0 }
 }
 
-// ─── Step 2: Overpass API ─────────────────────────────────────────────────────
+// ─── Shared Overpass mirror client ─────────────────────────────────────────────
 
-async function fetchOverpass(lat: number, lon: number): Promise<TransitStation[]> {
-  const primary = (process.env.OVERPASS_API_URL        || "https://overpass-api.de/api/interpreter").replace(/\/$/, "")
-  const backup  = (process.env.OVERPASS_API_URL_BACKUP || "https://overpass.kumi.systems/api/interpreter").replace(/\/$/, "")
+async function postToOverpass(query: string): Promise<any> {
+  const envPrimary = (process.env.OVERPASS_API_URL        || "").replace(/\/$/, "")
+  const envBackup  = (process.env.OVERPASS_API_URL_BACKUP || "").replace(/\/$/, "")
 
-  const d1   = 0.20  // ~22 km — for airports
-  const d2   = 0.12  // ~13 km — for city stations
-  const bb1  = `${lat - d1},${lon - d1},${lat + d1},${lon + d1}`
-  const bb2  = `${lat - d2},${lon - d2},${lat + d2},${lon + d2}`
+  // Four public mirrors + env overrides; deduplicated and empty-filtered
+  const candidates = [
+    envPrimary,
+    "https://overpass-api.de/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter",
+    "https://z.overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    envBackup,
+  ]
+  const mirrors = candidates.filter((u, i, arr) => u !== "" && arr.indexOf(u) === i)
 
-  const query = `[out:json][timeout:25];
-(
-  node["aeroway"="aerodrome"](${bb1});
-  way["aeroway"="aerodrome"](${bb1});
-  node["railway"="station"](${bb2});
-  node["railway"="halt"](${bb2});
-  node["amenity"="bus_station"](${bb2});
-  node["railway"="subway_entrance"](${bb2});
-  node["railway"="tram_stop"](${bb2});
-  node["amenity"="ferry_terminal"](${bb2});
-  node["public_transport"="station"](${bb2});
-);
-out body 35;`
+  let delay = 300  // ms before trying next mirror after 429
 
-  const doFetch = async (endpoint: string) => {
-    const res = await fetch(endpoint, {
-      method:  "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body:    `data=${encodeURIComponent(query)}`,
-      cache:   "no-store",
-      signal:  AbortSignal.timeout(30_000),
-    })
-    if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`)
-    return res.json()
+  for (let i = 0; i < mirrors.length; i++) {
+    const mirror = mirrors[i]
+    const label  = `mirror ${i + 1}/${mirrors.length}`
+    try {
+      const res = await fetch(mirror, {
+        method:  "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent":   "AITripPlanner/1.0 (transit-data-lookup)",
+          "Accept":       "application/json",
+        },
+        body:    `data=${encodeURIComponent(query)}`,
+        cache:   "no-store",
+        signal:  AbortSignal.timeout(40_000),
+      })
+
+      if (res.status === 429) {
+        console.warn(`[TRANSPORT] Overpass ${label} failed: HTTP 429 — rate limited, waiting ${delay}ms`)
+        if (i < mirrors.length - 1) {
+          await new Promise<void>(r => setTimeout(r, delay))
+          delay = Math.min(delay * 2, 3_000)
+        }
+        continue
+      }
+
+      if (!res.ok) {
+        console.warn(`[TRANSPORT] Overpass ${label} failed: HTTP ${res.status}`)
+        continue
+      }
+
+      const data = await res.json()
+      console.log(`[TRANSPORT] Overpass ${label} succeeded`)
+      return data
+
+    } catch (err) {
+      console.warn(`[TRANSPORT] Overpass ${label} failed: ${(err as Error).message}`)
+    }
   }
 
-  let raw: any = null
-  try { raw = await doFetch(primary) }
-  catch { try { raw = await doFetch(backup) } catch { return [] } }
-
-  const seen = new Set<string>()
-  const out:  TransitStation[] = []
-
-  for (const el of raw?.elements ?? []) {
-    const name = el.tags?.name || el.tags?.["name:en"] || ""
-    if (!name || seen.has(name.toLowerCase())) continue
-    seen.add(name.toLowerCase())
-
-    const elLat = el.lat ?? el.center?.lat ?? lat
-    const elLon = el.lon ?? el.center?.lon ?? lon
-
-    out.push({
-      id:      `osm-${el.id}`,
-      name,
-      type:    inferOverpassType(el.tags ?? {}),
-      lat:     elLat,
-      lon:     elLon,
-      address: [el.tags?.["addr:street"], el.tags?.["addr:city"]].filter(Boolean).join(", ") || undefined,
-    })
-
-    if (out.length >= 20) break
-  }
-
-  console.log(`[TRANSPORT] Overpass stations: ${out.length}`)
-  return out
+  throw new Error("All Overpass mirrors exhausted")
 }
 
 // ─── Step 3: OpenRouteService POIs ────────────────────────────────────────────
@@ -548,20 +594,24 @@ export function buildStaticTransportSummary(city: string, country: string): Tran
 // ─── GeoJSON coordinate helpers ───────────────────────────────────────────────
 
 function extractGeoJSONCoords(
-  geom: { type: string; coordinates: any } | null | undefined,
+  geom: { type: string; coordinates?: any; geometries?: any[] } | null | undefined,
 ): { lat: number; lng: number }[] {
-  if (!geom?.coordinates) return []
+  if (!geom) return []
   const out: { lat: number; lng: number }[] = []
 
   if (geom.type === "LineString") {
-    for (const [lon, lat] of geom.coordinates) {
+    for (const [lon, lat] of geom.coordinates ?? []) {
       if (typeof lat === "number" && typeof lon === "number") out.push({ lat, lng: lon })
     }
   } else if (geom.type === "MultiLineString") {
-    for (const segment of geom.coordinates) {
+    for (const segment of geom.coordinates ?? []) {
       for (const [lon, lat] of segment) {
         if (typeof lat === "number" && typeof lon === "number") out.push({ lat, lng: lon })
       }
+    }
+  } else if (geom.type === "GeometryCollection") {
+    for (const sub of geom.geometries ?? []) {
+      out.push(...extractGeoJSONCoords(sub))
     }
   }
   return out
@@ -576,6 +626,57 @@ function sampleCoords(
   return coords.filter((_, i) => i % step === 0)
 }
 
+// Removes coordinates outside radiusM of (lat, lon) and splits the remaining
+// points into contiguous segments.  Preserves all line metadata (name, mode, color).
+// Overpass returns full route-relation geometry which can extend dozens of km outside
+// the destination — this clips each line to only the portion near the city.
+function clipLinesToRadius(
+  lines:   TransitLine[],
+  lat:     number,
+  lon:     number,
+  radiusM: number,
+): TransitLine[] {
+  const cosLat  = Math.cos((lat * Math.PI) / 180)
+  const r2      = radiusM * radiusM
+
+  const inRange = (p: { lat: number; lng: number }) => {
+    const dy = (p.lat - lat) * 111_320
+    const dx = (p.lng - lon) * 111_320 * cosLat
+    return dy * dy + dx * dx <= r2
+  }
+
+  const out: TransitLine[] = []
+
+  for (const line of lines) {
+    const segments: { lat: number; lng: number }[][] = []
+    let seg: { lat: number; lng: number }[] = []
+
+    for (const pt of line.coordinates) {
+      if (inRange(pt)) {
+        seg.push(pt)
+      } else {
+        if (seg.length >= 2) segments.push(seg)
+        seg = []
+      }
+    }
+    if (seg.length >= 2) segments.push(seg)
+
+    if (segments.length === 0) continue
+
+    for (let i = 0; i < segments.length; i++) {
+      out.push({
+        id:          segments.length > 1 ? `${line.id}-clip${i}` : line.id,
+        name:        line.name,
+        mode:        line.mode,
+        color:       line.color,
+        coordinates: segments[i],
+      })
+    }
+  }
+
+  return out
+}
+
 const OVERPASS_MODE_COLOR: Record<string, string> = {
   bus:    "#16A34A",
   tram:   "#EA580C",
@@ -584,114 +685,276 @@ const OVERPASS_MODE_COLOR: Record<string, string> = {
   ferry:  "#0891B2",
 }
 
-// ─── Step 1b: Transitland route geometries ─────────────────────────────────────
-
-async function fetchTransitlandLines(
-  lat:    number,
-  lon:    number,
-  apiKey: string,
-): Promise<TransitLine[]> {
-  const BASE   = "https://transit.land/api/v2/rest"
-  const radius = 12_000
-  const url    = `${BASE}/routes?lat=${lat}&lon=${lon}&radius=${radius}&limit=20&per_page=20&apikey=${encodeURIComponent(apiKey)}`
-
-  try {
-    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(12_000) })
-    if (!res.ok) {
-      console.warn(`[TRANSPORT] Transitland geometry HTTP ${res.status}`)
-      return []
-    }
-    const data   = await res.json()
-    const routes = data.routes ?? []
-    const lines: TransitLine[] = []
-
-    for (const r of routes.slice(0, 20)) {
-      const coords = extractGeoJSONCoords(r.geometry)
-      if (coords.length < 2) continue
-      lines.push({
-        id:          r.onestop_id ?? String(r.id ?? lines.length),
-        name:        r.route_long_name || r.route_short_name || r.name || "Route",
-        mode:        GTFS_MODE[r.route_type as number] ?? "bus",
-        color:       r.route_color ? `#${r.route_color.replace(/^#/, "")}` : undefined,
-        coordinates: sampleCoords(coords, 200),
-      })
-    }
-
-    return lines
-  } catch (err) {
-    console.warn("[TRANSPORT] Transitland geometry error:", err)
-    return []
-  }
-}
-
 // ─── Step 2b: Overpass route relations ─────────────────────────────────────────
 
-async function fetchOverpassRouteLines(lat: number, lon: number): Promise<TransitLine[]> {
-  const primary = (process.env.OVERPASS_API_URL        || "https://overpass-api.de/api/interpreter").replace(/\/$/, "")
-  const backup  = (process.env.OVERPASS_API_URL_BACKUP || "https://overpass.kumi.systems/api/interpreter").replace(/\/$/, "")
+function overpassMode(routeType: string): string {
+  if (routeType === "subway") return "metro"
+  if (routeType === "light_rail" || routeType === "monorail" || routeType === "rail") return "rail"
+  if (routeType === "trolleybus") return "bus"
+  return routeType
+}
 
-  const d    = 0.10  // ~11 km
-  const bbox = `${lat - d},${lon - d},${lat + d},${lon + d}`
+// Assembles OSM way segments into continuous chains.
+// Each way may be stored in either direction relative to the route; this function
+// reverses ways as needed and breaks into separate chains on genuine gaps.
+function stitchWaySegments(
+  wayGeoms: { lat: number; lng: number }[][],
+): { lat: number; lng: number }[][] {
+  // ~22 m — OSM junction nodes are identical lat/lon; small threshold handles float noise
+  const SNAP = 0.0002
+  const near = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
+    Math.abs(a.lat - b.lat) < SNAP && Math.abs(a.lng - b.lng) < SNAP
 
-  const query = `[out:json][timeout:30];
-(
-  relation["route"~"^(bus|tram|subway|train|ferry)$"]["name"](${bbox});
-);
-out geom 12;`
+  const chains: { lat: number; lng: number }[][] = []
+  let chain: { lat: number; lng: number }[] = []
 
-  const doFetch = async (endpoint: string) => {
-    const res = await fetch(endpoint, {
-      method:  "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body:    `data=${encodeURIComponent(query)}`,
-      cache:   "no-store",
-      signal:  AbortSignal.timeout(35_000),
-    })
-    if (!res.ok) throw new Error(`Overpass route-lines HTTP ${res.status}`)
-    return res.json()
-  }
+  for (const pts of wayGeoms) {
+    if (pts.length < 2) continue
 
-  let raw: any = null
-  try { raw = await doFetch(primary) }
-  catch { try { raw = await doFetch(backup) } catch { return [] } }
-
-  const lines: TransitLine[] = []
-  const seenNames = new Set<string>()
-
-  for (const el of (raw?.elements ?? []).slice(0, 15)) {
-    if (el.type !== "relation" || !el.members) continue
-
-    const routeType = el.tags?.route ?? "bus"
-    const name      = el.tags?.name  || el.tags?.ref || `${routeType} route`
-    if (seenNames.has(name)) continue
-    seenNames.add(name)
-
-    const rawColor  = el.tags?.colour || el.tags?.color || OVERPASS_MODE_COLOR[routeType] || "#6B7280"
-    const color     = rawColor.startsWith("#") ? rawColor : `#${rawColor}`
-    const mode      = routeType === "subway" ? "metro" : routeType
-
-    const coords: { lat: number; lng: number }[] = []
-    for (const member of (el.members as any[]).slice(0, 60)) {
-      if (member.type !== "way" || !Array.isArray(member.geometry)) continue
-      for (const pt of member.geometry) {
-        if (typeof pt.lat === "number" && typeof pt.lon === "number") {
-          coords.push({ lat: pt.lat, lng: pt.lon })
-        }
-      }
+    if (chain.length === 0) {
+      chain = [...pts]
+      continue
     }
 
-    if (coords.length < 2) continue
-    lines.push({
-      id:          `osm-rel-${el.id}`,
+    const tail  = chain[chain.length - 1]
+    const wHead = pts[0]
+    const wTail = pts[pts.length - 1]
+
+    if (near(tail, wHead)) {
+      chain.push(...pts.slice(1))                      // forward — skip shared junction
+    } else if (near(tail, wTail)) {
+      chain.push(...[...pts].reverse().slice(1))       // reversed — skip shared junction
+    } else {
+      chains.push(chain)                               // genuine gap — new chain
+      chain = [...pts]
+    }
+  }
+
+  if (chain.length >= 2) chains.push(chain)
+  return chains
+}
+
+function buildLinesFromInlineGeom(relations: any[]): TransitLine[] {
+  const lines: TransitLine[] = []
+  const seen  = new Set<string>()
+
+  for (const el of relations.slice(0, 15)) {
+    const routeType = el.tags?.route ?? "bus"
+    const name      = el.tags?.name || el.tags?.ref || `${routeType}-${el.id}`
+    if (seen.has(name)) continue
+    seen.add(name)
+
+    const rawColor = el.tags?.colour || el.tags?.color || OVERPASS_MODE_COLOR[routeType] || "#6B7280"
+    const color    = rawColor.startsWith("#") ? rawColor : `#${rawColor}`
+    const mode     = overpassMode(routeType)
+
+    // Collect each OSM way as its own segment — do NOT concatenate yet
+    const wayGeoms: { lat: number; lng: number }[][] = []
+    for (const member of (el.members ?? []).slice(0, 500)) {
+      if (member.type !== "way" || !Array.isArray(member.geometry)) continue
+      const pts: { lat: number; lng: number }[] = []
+      for (const pt of member.geometry) {
+        if (typeof pt.lat === "number" && typeof pt.lon === "number") pts.push({ lat: pt.lat, lng: pt.lon })
+      }
+      if (pts.length >= 2) wayGeoms.push(pts)
+    }
+    if (wayGeoms.length === 0) continue
+
+    const chains = stitchWaySegments(wayGeoms)
+    for (let idx = 0; idx < chains.length; idx++) {
+      const chain = chains[idx]
+      if (chain.length < 2) continue
+      lines.push({
+        id:          `osm-${el.id}${chains.length > 1 ? `-seg${idx}` : ""}`,
+        name,
+        mode,
+        color,
+        coordinates: sampleCoords(chain, 300),
+      })
+    }
+  }
+  return lines
+}
+
+function buildLinesFromRecursive(elements: any[]): TransitLine[] {
+  const nodeMap = new Map<number, { lat: number; lng: number }>()
+  const wayMap  = new Map<number, number[]>()
+
+  for (const el of elements) {
+    if (el.type === "node" && typeof el.lat === "number") {
+      nodeMap.set(el.id, { lat: el.lat, lng: el.lon })
+    } else if (el.type === "way" && Array.isArray(el.nodes)) {
+      wayMap.set(el.id, el.nodes)
+    }
+  }
+
+  const relations = elements.filter((e: any) => e.type === "relation")
+  console.log(`[TRANSPORT] Overpass recursive parsed: ${relations.length} rels / ${wayMap.size} ways / ${nodeMap.size} nodes`)
+
+  const lines: TransitLine[] = []
+  const seen  = new Set<string>()
+
+  for (const el of relations.slice(0, 10)) {
+    const routeType = el.tags?.route ?? "bus"
+    const name      = el.tags?.name || el.tags?.ref || `${routeType}-${el.id}`
+    if (seen.has(name)) continue
+    seen.add(name)
+
+    const rawColor = el.tags?.colour || el.tags?.color || OVERPASS_MODE_COLOR[routeType] || "#6B7280"
+    const color    = rawColor.startsWith("#") ? rawColor : `#${rawColor}`
+    const mode     = overpassMode(routeType)
+
+    // Collect each OSM way as its own segment — do NOT concatenate yet
+    const wayGeoms: { lat: number; lng: number }[][] = []
+    for (const member of (el.members ?? []).slice(0, 300)) {
+      if (member.type !== "way") continue
+      const nodeIds = wayMap.get(member.ref) ?? []
+      const pts: { lat: number; lng: number }[] = []
+      for (const nid of nodeIds) {
+        const pt = nodeMap.get(nid)
+        if (pt) pts.push(pt)
+      }
+      if (pts.length >= 2) wayGeoms.push(pts)
+    }
+    if (wayGeoms.length === 0) continue
+
+    const chains = stitchWaySegments(wayGeoms)
+    for (let idx = 0; idx < chains.length; idx++) {
+      const chain = chains[idx]
+      if (chain.length < 2) continue
+      lines.push({
+        id:          `osm-${el.id}${chains.length > 1 ? `-seg${idx}` : ""}`,
+        name,
+        mode,
+        color,
+        coordinates: sampleCoords(chain, 300),
+      })
+    }
+  }
+
+  console.log(`[TRANSPORT] Overpass recursive polylines: ${lines.length}`)
+  return lines
+}
+
+async function fetchOverpassRouteLines(lat: number, lon: number): Promise<TransitLine[]> {
+  const d    = 0.12
+  const bbox = `${lat - d},${lon - d},${lat + d},${lon + d}`
+
+  // ── Attempt 1: out geom — embeds way-member geometry inline ──────────────────
+  const inlineQuery = `[out:json][timeout:40];
+(
+  relation["type"="route"]["route"~"^(bus|tram|subway|train|ferry|light_rail|rail|monorail|trolleybus)$"](${bbox});
+);
+out geom 15;`
+
+  let raw1: any = null
+  try { raw1 = await postToOverpass(inlineQuery) }
+  catch (e) { console.warn("[TRANSPORT] Overpass inline all mirrors failed:", (e as Error).message) }
+
+  const allElems1: any[] = raw1?.elements ?? []
+  if (raw1?.remark) console.warn("[TRANSPORT] Overpass inline remark:", raw1.remark)
+  console.log(`[TRANSPORT] Overpass inline: ${allElems1.length} elements (reachable=${!!raw1})`)
+
+  const rels1: any[] = allElems1.filter((e: any) => e.type === "relation")
+  console.log(`[TRANSPORT] Overpass inline relations: ${rels1.length}`)
+
+  if (rels1.length > 0) {
+    const fr       = rels1[0]
+    const wayMems  = (fr.members ?? []).filter((m: any) => m.type === "way")
+    const withGeom = wayMems.filter((m: any) => Array.isArray(m.geometry) && m.geometry.length > 0)
+    console.log(`[TRANSPORT] First relation "${fr.tags?.name ?? fr.tags?.ref ?? fr.id}": ${wayMems.length} way-members, ${withGeom.length} with inline geometry`)
+  }
+
+  const lines1 = clipLinesToRadius(buildLinesFromInlineGeom(rels1), lat, lon, 14_000)
+  console.log(`[TRANSPORT] Overpass inline polylines: ${lines1.length} (after clip)`)
+  if (lines1.length > 0) return lines1
+
+  // ── Attempt 2: recursive — resolve ways→nodes→coords ─────────────────────────
+  const d2    = 0.06
+  const bbox2 = `${lat - d2},${lon - d2},${lat + d2},${lon + d2}`
+  const recursiveQuery = `[out:json][timeout:50];
+(
+  relation["type"="route"]["route"~"^(bus|tram|subway|train|ferry|light_rail|rail|monorail|trolleybus)$"](${bbox2});
+);
+out body 10;
+>;
+out skel qt;`
+
+  let raw2: any = null
+  try { raw2 = await postToOverpass(recursiveQuery) }
+  catch (e) {
+    console.warn("[TRANSPORT] Overpass recursive all mirrors failed:", (e as Error).message)
+    return []
+  }
+  if (raw2?.remark) console.warn("[TRANSPORT] Overpass recursive remark:", raw2.remark)
+
+  const elems2: any[] = raw2?.elements ?? []
+  console.log(`[TRANSPORT] Overpass recursive: ${elems2.length} total elements`)
+
+  return clipLinesToRadius(buildLinesFromRecursive(elems2), lat, lon, 14_000)
+}
+
+// ─── Combined station + route query (one Overpass call, no duplicates) ────────
+
+async function fetchOverpassFull(lat: number, lon: number): Promise<{
+  stations: TransitStation[]
+  lines:    TransitLine[]
+}> {
+  const d1    = 0.20   // ~22 km — airports
+  const d2    = 0.12   // ~13 km — stations
+  const dLine = 0.10   // ~11 km — route relations (tighter keeps query fast)
+  const bb1   = `${lat - d1},${lon - d1},${lat + d1},${lon + d1}`
+  const bb2   = `${lat - d2},${lon - d2},${lat + d2},${lon + d2}`
+  const bbL   = `${lat - dLine},${lon - dLine},${lat + dLine},${lon + dLine}`
+
+  const query = `[out:json][timeout:50];
+(
+  relation["type"="route"]["route"~"^(bus|tram|subway|train|ferry|light_rail|rail|monorail|trolleybus)$"](${bbL});
+  node["aeroway"="aerodrome"](${bb1});
+  way["aeroway"="aerodrome"](${bb1});
+  node["railway"="station"](${bb2});
+  node["railway"="halt"](${bb2});
+  node["amenity"="bus_station"](${bb2});
+  node["railway"="subway_entrance"](${bb2});
+  node["railway"="tram_stop"](${bb2});
+  node["amenity"="ferry_terminal"](${bb2});
+  node["public_transport"="station"](${bb2});
+);
+out geom 80;`
+
+  let raw: any
+  try { raw = await postToOverpass(query) }
+  catch (e) {
+    console.warn("[TRANSPORT] Overpass combined all mirrors failed:", (e as Error).message)
+    return { stations: [], lines: [] }
+  }
+  if (raw?.remark) console.warn("[TRANSPORT] Overpass combined remark:", raw.remark)
+
+  const elements: any[] = raw?.elements ?? []
+  const relations = elements.filter((e: any) => e.type === "relation")
+  const nodeElems = elements.filter((e: any) => e.type === "node" || e.type === "way")
+
+  const rawLines = buildLinesFromInlineGeom(relations)
+  const lines    = clipLinesToRadius(rawLines, lat, lon, 14_000)
+
+  const seen: Set<string> = new Set()
+  const stations: TransitStation[] = []
+  for (const el of nodeElems) {
+    const name = el.tags?.name || el.tags?.["name:en"] || ""
+    if (!name || seen.has(name.toLowerCase())) continue
+    seen.add(name.toLowerCase())
+    stations.push({
+      id:      `osm-${el.id}`,
       name,
-      mode,
-      color,
-      coordinates: sampleCoords(coords, 200),
+      type:    inferOverpassType(el.tags ?? {}),
+      lat:     el.lat ?? el.center?.lat ?? lat,
+      lon:     el.lon ?? el.center?.lon ?? lon,
+      address: [el.tags?.["addr:street"], el.tags?.["addr:city"]].filter(Boolean).join(", ") || undefined,
     })
   }
 
-  console.log(`[TRANSPORT] Overpass route lines: ${lines.length}`)
-  return lines
+  console.log(`[TRANSPORT] Overpass combined: ${relations.length} relations → ${rawLines.length} lines → ${lines.length} after clip, ${stations.length} stations`)
+  return { stations, lines }
 }
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
@@ -721,23 +984,28 @@ export async function fetchTransportData(
       if (tl.hasData) {
         const modes  = buildStaticModes(getProfile(city), city)
 
-        // Fetch line geometries — Transitland first, Overpass route relations as fallback
-        let lines = await fetchTransitlandLines(lat, lon, tlKey).catch(() => [] as TransitLine[])
+        // Geometry from GraphQL; fall back to Overpass if Transitland returned no shapes
+        let lines = tl.lines
         if (lines.length === 0) {
           lines = await fetchOverpassRouteLines(lat, lon).catch(() => [] as TransitLine[])
         }
 
+        const linesFromOverpass = tl.lines.length === 0 && lines.length > 0
+        const validLines = lines.filter(l => l.coordinates.length >= 2)
         console.log(
-          `[TRANSPORT] Final transportation dataset: source=transitland | ` +
-          `routes=${tl.routes.length} lines=${lines.length} stations=${tl.stations.length}`
+          `[TRANSPORT] Final: meta=transitland lines_source=${linesFromOverpass ? "overpass" : "transitland"} ` +
+          `routes=${tl.routes.length} lines=${lines.length} validLines=${validLines.length} stations=${tl.stations.length}`
         )
+        for (const l of lines.slice(0, 3)) {
+          console.log(`[TRANSPORT]   line "${l.name}" mode=${l.mode} coords=${l.coordinates.length} firstCoord=${JSON.stringify(l.coordinates[0])}`)
+        }
         return {
           stations:   tl.stations,
           routes:     tl.routes,
           operators:  tl.operators,
           modes,
           lines,
-          dataSource: "transitland",
+          dataSource: linesFromOverpass ? "overpass" : "transitland",
           summary:    staticBase.summary,
         }
       }
@@ -748,18 +1016,12 @@ export async function fetchTransportData(
     console.log("[TRANSPORT] TRANSITLAND_API_KEY not set — skipping")
   }
 
-  // ── Priority 2: Overpass ────────────────────────────────────────────────
+  // ── Priority 2: Overpass (single combined call — no duplicate mirror hits) ──
   try {
-    const [stations, lines] = await Promise.all([
-      fetchOverpass(lat, lon).catch(() => [] as TransitStation[]),
-      fetchOverpassRouteLines(lat, lon).catch(() => [] as TransitLine[]),
-    ])
+    const { stations, lines } = await fetchOverpassFull(lat, lon)
     if (stations.length > 0 || lines.length > 0) {
       const modes = buildStaticModes(getProfile(city), city)
-      console.log(
-        `[TRANSPORT] Final transportation dataset: source=overpass | ` +
-        `routes=0 lines=${lines.length} stations=${stations.length}`
-      )
+      console.log(`[TRANSPORT] Final: source=overpass lines=${lines.length} stations=${stations.length}`)
       return {
         stations,
         routes:     [],
